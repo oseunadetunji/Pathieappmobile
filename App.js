@@ -1,20 +1,64 @@
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { auth } from './firebase';
+import AppNavigator from './src/navigation/AppNavigator';
+import { SubscriptionProvider } from './src/context/SubscriptionContext';
+import * as Notifications from 'expo-notifications';
+
+// Configure notifications
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Listen for authentication state changes
+    // Using compat mode - auth.onAuthStateChanged instead of onAuthStateChanged(auth, ...)
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    // Request notification permissions
+    registerForPushNotifications();
+
+    return unsubscribe;
+  }, []);
+
+  const registerForPushNotifications = async () => {
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        console.log('Failed to get push token for push notification!');
+        return;
+      }
+    } catch (error) {
+      console.error('Error registering for notifications:', error);
+    }
+  };
+
+  if (loading) {
+    return null; // Or a loading screen
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SubscriptionProvider>
+      <StatusBar style="light" />
+      <AppNavigator user={user} />
+    </SubscriptionProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
