@@ -242,9 +242,7 @@ export default function ActivityPlanScreen({ route, navigation }) {
         </Text>
       </View>
 
-      <ScrollView style={styles.content}>
-        <ActivityPlanGuide planCount={customPlan.length} scheduledCount={scheduledCount} childName={child.name} />
-
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 170 }}>
         {/* Your Custom Plan Section */}
         {customPlan.length > 0 && (
           <View style={styles.section}>
@@ -382,6 +380,15 @@ export default function ActivityPlanScreen({ route, navigation }) {
           <Text style={styles.buttonText}>📅 View Calendar</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <ActivityPlanGuide
+        planCount={customPlan.length}
+        scheduledCount={scheduledCount}
+        hasSuggestion={Boolean(suggestedActivities[0] && suggestedActivities[0].activities && suggestedActivities[0].activities[0])}
+        planActivityName={customPlan[0] ? customPlan[0].name : ''}
+        onAddFirst={() => addToPlan(suggestedActivities[0].activities[0], suggestedActivities[0].category)}
+        onFindProviders={() => navigation.navigate('FindProviders', { child, goal, activity: customPlan[0].name })}
+      />
 
       {/* Add Custom Activity Modal */}
       <Modal

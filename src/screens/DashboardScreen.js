@@ -60,14 +60,13 @@ export default function DashboardScreen({ navigation }) {
     .slice(0, 3);
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={{ flex: 1 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 150 }}>
       <View style={styles.header}>
         <HeaderBack />
         <Text style={styles.greeting}>Welcome back! {"\uD83D\uDC4B"}</Text>
         <Text style={styles.subtitle}>Here's your family's progress</Text>
       </View>
-
-      <GettingStarted kids={children} activities={activities} navigation={navigation} />
 
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
@@ -191,6 +190,8 @@ export default function DashboardScreen({ navigation }) {
         )}
       </View>
     </ScrollView>
+    <GettingStarted kids={children} activities={activities} navigation={navigation} />
+    </View>
   );
 }
 
