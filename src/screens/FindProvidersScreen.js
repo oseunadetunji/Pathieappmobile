@@ -531,6 +531,9 @@ export default function FindProvidersScreen({ route, navigation }) {
         return;
       }
 
+      // Sessions of one repeating schedule share a seriesId and count as one activity toward the free limit
+      const seriesId = dates.length > 1 ? `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` : null;
+
       await Promise.all(
         dates.map((date) =>
           addDoc(collection(db, 'activities'), {
@@ -547,7 +550,8 @@ export default function FindProvidersScreen({ route, navigation }) {
             notes: '',
             createdAt: new Date(),
             scheduledDate: date,
-            recurrence
+            recurrence,
+            ...(seriesId ? { seriesId } : {})
           })
         )
       );

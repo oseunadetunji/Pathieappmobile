@@ -54,9 +54,7 @@ export default function PricingScreen({ navigation }) {
       features: [
         'Unlimited child profiles',
         'Unlimited goals per child',
-        'Unlimited provider searches',
         'Unlimited scheduled activities',
-        'Recurring schedules',
         'Advanced progress analytics',
         'Calendar export (Google/Apple)',
         'Priority support (24hr)',
@@ -210,6 +208,15 @@ export default function PricingScreen({ navigation }) {
 
           </View>
         ))}
+
+        {/* What Free includes */}
+        <View style={styles.freeNote}>
+          <Text style={styles.freeNoteTitle}>Free plan</Text>
+          <Text style={styles.freeNoteText}>
+            1 child, 2 goals per child, up to 10 upcoming activities,
+            plus provider search and recurring schedules. No card needed.
+          </Text>
+        </View>
 
         {/* FAQ Section */}
         <View style={styles.faqSection}>
@@ -442,6 +449,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#10B981',
   },
+  freeNote: {
+    backgroundColor: '#F5F0FF',
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 8,
+    padding: 14,
+    borderRadius: 12,
+  },
+  freeNoteTitle: { fontSize: 14, fontWeight: 'bold', color: '#6B21A8', marginBottom: 2 },
+  freeNoteText: { fontSize: 13, color: '#4B5563', lineHeight: 19 },
   guarantee: {
     textAlign: 'center',
     fontSize: 12,

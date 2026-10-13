@@ -28,8 +28,8 @@ export const SUBSCRIPTION_LIMITS = {
     maxChildren: 1,
     maxGoalsPerChild: 2,
     maxScheduledActivities: 10,
-    maxProviderSearches: 5,
-    canUseRecurringSchedules: false,
+    maxProviderSearches: Infinity, // search is open to everyone; a high server-side fair-use ceiling remains
+    canUseRecurringSchedules: true,
     canUseAdvancedAnalytics: false,
     canExportCalendar: false,
     canUseFamilySharing: false,
@@ -225,8 +225,8 @@ export function SubscriptionProvider({ children }) {
     const messages = {
       maxChildren: 'Free includes 1 child. Upgrade to Family ($9.99/mo) to add more children.',
       maxGoalsPerChild: 'Free includes 2 goals per child. Upgrade to Family ($9.99/mo) for unlimited goals.',
-      maxScheduledActivities: 'Free includes 10 scheduled activities. Upgrade to Family ($9.99/mo) for unlimited, or complete or remove some to free up space.',
-      maxProviderSearches: "You've used your 5 free activity searches this month. Upgrade to Family ($9.99/mo) for unlimited searches.",
+      maxScheduledActivities: 'Free includes up to 10 upcoming activities. Upgrade to Family ($9.99/mo) for unlimited, or complete or remove some to free up space.',
+      maxProviderSearches: "You've reached this month's search limit, which is far above normal use. It resets on the 1st. Upgrade to Family ($9.99/mo) for unlimited searches.",
       recurringSchedules: 'Recurring schedules are a Family feature. Upgrade to Family ($9.99/mo), or schedule a single session.',
       advancedAnalytics: 'Upgrade to Family ($9.99/mo) for advanced analytics',
     };
@@ -284,7 +284,7 @@ export function SubscriptionProvider({ children }) {
     return true;
   };
 
-  // Scheduled-activity cap (counts real upcoming/not-completed docs) + recurring is a Family feature.
+  // Scheduled-activity cap (counts real upcoming/not-completed docs). Recurring schedules are open to all plans.
   // Returns true if allowed; otherwise shows the upgrade prompt and returns false.
   const checkCanSchedule = async (newCount, recurrence, navigation) => {
     const userId = auth.currentUser?.uid;
@@ -297,8 +297,12 @@ export function SubscriptionProvider({ children }) {
     if (max === Infinity) return true;
     try {
       const snap = await getDocs(query(collection(db, 'activities'), where('userId', '==', userId)));
-      const active = snap.docs.filter((d) => d.data().completed !== true).length;
-      if (active + newCount > max) {
+      // A repeating schedule (sessions sharing a seriesId) counts as ONE activity.
+      const activeSeries = new Set(
+        snap.docs.filter((d) => d.data().completed !== true).map((d) => d.data().seriesId || d.id)
+      );
+      const adding = recurrence && recurrence !== 'once' ? 1 : newCount;
+      if (activeSeries.size + adding > max) {
         promptUpgrade('maxScheduledActivities', navigation);
         return false;
       }

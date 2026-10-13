@@ -183,9 +183,10 @@ exports.enforceGoalLimit = onDocumentWritten(
 
 
 // ---------------------------------------------------------------------------
-// Free plan: 5 provider searches a month, counted here so users can't edit the counter.
+// Provider searches are open to everyone. Counted here (users can't edit the counter) with a high
+// fair-use ceiling for free accounts that normal parents never reach; it only stops scripts and runaway loops.
 // ---------------------------------------------------------------------------
-const FREE_MAX_SEARCHES = 5;
+const FREE_MAX_SEARCHES = 150;
 const FREE_MAX_ACTIVE_ACTIVITIES = 10;
 
 exports.recordProviderSearch = onCall({ region: 'us-central1' }, async (request) => {
@@ -209,7 +210,8 @@ exports.recordProviderSearch = onCall({ region: 'us-central1' }, async (request)
   });
 });
 
-// Free accounts: at most 10 not-yet-completed scheduled activities. Remove overflow at creation.
+// Free accounts: at most 10 upcoming (not completed) activities. A repeating schedule (sessions that
+// share a seriesId) counts as ONE activity. Remove overflow at creation.
 exports.enforceActivityLimit = onDocumentCreated(
   { document: 'activities/{activityId}', region: FIRESTORE_REGION },
   async (event) => {
@@ -217,11 +219,20 @@ exports.enforceActivityLimit = onDocumentCreated(
     const uid = data && data.userId;
     if (!uid || (await isPaid(uid))) return;
     const snap = await db.collection('activities').where('userId', '==', uid).get();
-    const active = snap.docs
-      .filter((d) => d.data().completed !== true)
-      .sort((a, b) => a.createTime.toMillis() - b.createTime.toMillis() || (a.id < b.id ? -1 : 1));
-    const keep = new Set(active.slice(0, FREE_MAX_ACTIVE_ACTIVITIES).map((d) => d.id));
-    if (active.length > FREE_MAX_ACTIVE_ACTIVITIES && !keep.has(event.params.activityId)) {
+    const active = snap.docs.filter((d) => d.data().completed !== true);
+    // Group sessions into activities (a series counts once); order activities by when they were first created.
+    const groups = new Map();
+    for (const d of active) {
+      const key = d.data().seriesId || d.id;
+      const created = d.createTime.toMillis();
+      const g = groups.get(key) || { key, first: created, firstId: d.id };
+      if (created < g.first || (created === g.first && d.id < g.firstId)) { g.first = created; g.firstId = d.id; }
+      groups.set(key, g);
+    }
+    const ordered = [...groups.values()].sort((a, b) => a.first - b.first || (a.firstId < b.firstId ? -1 : 1));
+    const keep = new Set(ordered.slice(0, FREE_MAX_ACTIVE_ACTIVITIES).map((g) => g.key));
+    const myKey = (data && data.seriesId) || event.params.activityId;
+    if (ordered.length > FREE_MAX_ACTIVE_ACTIVITIES && !keep.has(myKey)) {
       logger.warn('Free activity limit exceeded; removing', { uid, id: event.params.activityId });
       await db.doc(`activities/${event.params.activityId}`).delete();
     }
