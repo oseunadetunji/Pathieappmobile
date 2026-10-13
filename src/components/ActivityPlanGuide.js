@@ -18,23 +18,21 @@ export default function ActivityPlanGuide({ planCount, scheduledCount, hasSugges
 
   if (scheduledCount > 0) return null;
 
-  let key, step, title, body, button, onPress;
+  let key, step, title, button, onPress;
   if (planCount === 0) {
     key = 'plan'; step = 1;
     title = 'Start your plan';
     if (hasSuggestion) {
-      body = 'Add the first suggestion to your plan. You can add more or your own later.';
-      button = 'Add it to my plan';
+      button = 'Add first activity';
       onPress = onAddFirst;
     } else {
-      body = 'Pick the closest area above, then tap "+ Add to Plan" on an activity.';
+      title = 'Pick an area above, then add an activity';
       button = 'Got it';
       onPress = null;
     }
   } else {
     key = 'find'; step = 2;
     title = 'Find a class near you';
-    body = `Search nearby providers for "${planActivityName}", or tap Schedule on it to pick a date yourself.`;
     button = 'Find providers';
     onPress = onFindProviders;
   }
@@ -52,7 +50,6 @@ export default function ActivityPlanGuide({ planCount, scheduledCount, hasSugges
       step={step}
       total={2}
       title={title}
-      body={body}
       button={button}
       onPress={onPress || dismiss}
       onDismiss={dismiss}

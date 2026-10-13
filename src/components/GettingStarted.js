@@ -32,32 +32,28 @@ export default function GettingStarted({ kids, activities, navigation }) {
 
   if (hasChild && hasGoal && hasActivity) return null;
 
-  let key, step, title, body, button, onPress;
+  let key, step, title, button, onPress;
   if (!hasChild) {
     key = 'child'; step = 1;
-    title = 'Welcome to Pathie 👋';
-    body = 'Start by adding your child. It takes a minute.';
-    button = 'Add your child';
+    title = 'Welcome! Add your child to begin';
+    button = 'Add child';
     onPress = () => navigation.navigate('Kids');
   } else if (!hasGoal) {
     key = 'goal'; step = 2;
     title = `What's ${firstChild.name}'s big dream?`;
-    body = 'Add a goal, like basketball, art or science.';
     button = 'Add a goal';
     onPress = () => navigation.navigate('ChildProfile', { child: firstChild });
   } else if (!hasLocation) {
     key = 'location'; step = 3;
-    title = 'Where should we look?';
-    body = 'Set your location once to find classes near you.';
-    button = 'Set my location';
+    title = 'Set your location to find classes';
+    button = 'Set location';
     onPress = () => navigation.navigate('Settings', { screen: 'LocationSettings' });
   } else {
     key = 'find'; step = 3;
     const withGoal = kids.find((c) => Array.isArray(c.goals) && c.goals.length > 0);
     const goal = withGoal.goals[0];
-    title = 'Find the first activity';
-    body = `See classes and clubs near you for "${goal}".`;
-    button = 'Find activities';
+    title = 'Find a first activity';
+    button = 'Search now';
     onPress = () => navigation.navigate('FindProviders', { child: withGoal, goal, activity: `${goal} classes` });
   }
 
@@ -70,6 +66,6 @@ export default function GettingStarted({ kids, activities, navigation }) {
   };
 
   return (
-    <TipBubble step={step} total={3} title={title} body={body} button={button} onPress={onPress} onDismiss={dismiss} />
+    <TipBubble step={step} total={3} title={title} button={button} onPress={onPress} onDismiss={dismiss} />
   );
 }

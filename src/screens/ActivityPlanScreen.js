@@ -242,7 +242,7 @@ export default function ActivityPlanScreen({ route, navigation }) {
         </Text>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 170 }}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Your Custom Plan Section */}
         {customPlan.length > 0 && (
           <View style={styles.section}>

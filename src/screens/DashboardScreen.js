@@ -61,7 +61,7 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1 }}>
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 150 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 110 }}>
       <View style={styles.header}>
         <HeaderBack />
         <Text style={styles.greeting}>Welcome back! {"\uD83D\uDC4B"}</Text>
