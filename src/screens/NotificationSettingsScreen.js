@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { showAlert } from '../utils/crossAlert';
 
 export default function NotificationSettingsScreen({ navigation }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -38,7 +39,7 @@ export default function NotificationSettingsScreen({ navigation }) {
     if (value) {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
+        showAlert(
           'Permission Required',
           'Please enable notifications in your device settings to receive activity reminders.'
         );
@@ -49,7 +50,7 @@ export default function NotificationSettingsScreen({ navigation }) {
     setNotificationsEnabled(value);
     await AsyncStorage.setItem('notifications_enabled', JSON.stringify(value));
     
-    Alert.alert(
+    showAlert(
       'Success',
       value ? 'Activity reminders enabled' : 'Activity reminders disabled'
     );
@@ -65,7 +66,7 @@ export default function NotificationSettingsScreen({ navigation }) {
       '30min': '30 minutes before'
     };
     
-    Alert.alert('Success', `Reminder time set to ${timeLabels[time]}`);
+    showAlert('Success', `Reminder time set to ${timeLabels[time]}`);
   };
 
   const reminderOptions = [

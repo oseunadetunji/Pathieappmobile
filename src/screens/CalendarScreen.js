@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Modal, Alert } from 'react-native';
 import { auth, db } from '../../firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Calendar } from 'react-native-calendars';
+import { showAlert } from '../utils/crossAlert';
 
 export default function CalendarScreen() {
   const [activities, setActivities] = useState([]);
@@ -16,9 +18,9 @@ export default function CalendarScreen() {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
 
-    const q = db.collection('activities').where('userId', '==', userId);
+   const q = query(collection(db, 'activities'), where('userId', '==', userId));
     
-    const unsubscribe = q.onSnapshot((snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const activitiesData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -62,12 +64,12 @@ export default function CalendarScreen() {
 
   const toggleComplete = async (activity) => {
     try {
-      await db.collection('activities').doc(activity.id).update({
+      await updateDoc(doc(db, 'activities', activity.id), {
         completed: !activity.completed,
         completedAt: !activity.completed ? new Date() : null
       });
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
@@ -81,16 +83,16 @@ export default function CalendarScreen() {
     if (!selectedActivity) return;
     
     try {
-      await db.collection('activities').doc(selectedActivity.id).update({ notes: note });
+     await updateDoc(doc(db, 'activities', selectedActivity.id), { notes: note });
       setShowNoteModal(false);
-      Alert.alert('Success', 'Note saved!');
+      showAlert('Success', 'Note saved!');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
   const deleteActivity = async (activityId) => {
-    Alert.alert(
+    showAlert(
       'Delete Activity',
       'Are you sure you want to delete this activity?',
       [
@@ -100,9 +102,9 @@ export default function CalendarScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await db.collection('activities').doc(activityId).delete();
+            await deleteDoc(doc(db, 'activities', activityId));
             } catch (error) {
-              Alert.alert('Error', error.message);
+              showAlert('Error', error.message);
             }
           }
         }

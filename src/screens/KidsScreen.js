@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { collection, query, onSnapshot, where, addDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
+import { showAlert } from '../utils/crossAlert';
+import { useSubscription } from '../context/SubscriptionContext';
 
 export default function KidsScreen({ navigation }) {
+  const { startAddChild } = useSubscription();
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,25 +35,6 @@ export default function KidsScreen({ navigation }) {
     return unsubscribe;
   }, []);
 
-  const addSampleChild = async () => {
-    const userId = auth.currentUser?.uid;
-    if (!userId) return;
-
-    try {
-      await addDoc(collection(db, 'children'), {
-        userId,
-        name: 'Emma',
-        age: 7,
-        avatar: '👧',
-        goals: ['Become a Doctor', 'Learn Piano'],
-        createdAt: new Date()
-      });
-      Alert.alert('Success', 'Sample child added!');
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    }
-  };
-
   const getAvatarEmoji = (index) => {
     const emojis = ['👧', '👦', '🧒', '👶', '🧑'];
     return emojis[index % emojis.length];
@@ -66,7 +50,7 @@ export default function KidsScreen({ navigation }) {
   const handleDeleteChild = async (child) => {
     const userId = auth.currentUser?.uid;
     if (!userId) {
-      Alert.alert('Error', 'You must be logged in to delete a child profile');
+      showAlert('Error', 'You must be logged in to delete a child profile');
       return;
     }
 
@@ -102,7 +86,7 @@ export default function KidsScreen({ navigation }) {
       
       deleteMessage += `\nThis action cannot be undone.`;
 
-      Alert.alert(
+      showAlert(
         '⚠️ Delete Child Profile',
         deleteMessage,
         [
@@ -134,10 +118,10 @@ export default function KidsScreen({ navigation }) {
                 // Finally, delete the child document
                 await deleteDoc(doc(db, 'children', child.id));
 
-                Alert.alert('Success', `${child.name}'s profile has been deleted`);
+                showAlert('Success', `${child.name}'s profile has been deleted`);
               } catch (error) {
                 console.error('Error deleting child:', error);
-                Alert.alert('Error', 'Failed to delete child profile. Please try again.');
+                showAlert('Error', 'Failed to delete child profile. Please try again.');
               }
             }
           }
@@ -145,7 +129,7 @@ export default function KidsScreen({ navigation }) {
       );
     } catch (error) {
       console.error('Error preparing delete:', error);
-      Alert.alert('Error', 'Failed to prepare deletion. Please try again.');
+      showAlert('Error', 'Failed to prepare deletion. Please try again.');
     }
   };
 
@@ -160,7 +144,7 @@ export default function KidsScreen({ navigation }) {
         <View style={styles.addButtonContainer}>
           <TouchableOpacity 
             style={styles.addButton}
-            onPress={() => navigation.navigate('AddGoal', { mode: 'newChild' })}
+            onPress={() => startAddChild(navigation)}
           >
             <Text style={styles.addButtonIcon}>+</Text>
             <Text style={styles.addButtonText}>Add Child</Text>
@@ -176,15 +160,9 @@ export default function KidsScreen({ navigation }) {
             <Text style={styles.emptySubtext}>Add your first child to get started!</Text>
             <TouchableOpacity 
               style={styles.primaryButton}
-              onPress={() => navigation.navigate('AddGoal', { mode: 'newChild' })}
+              onPress={() => startAddChild(navigation)}
             >
               <Text style={styles.buttonText}>Add Your First Child</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.primaryButton, styles.secondaryButton]}
-              onPress={addSampleChild}
-            >
-              <Text style={styles.buttonText}>Add Sample Child (Emma)</Text>
             </TouchableOpacity>
           </View>
         ) : (

@@ -1,8 +1,8 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screens
@@ -16,6 +16,17 @@ import ChildProfileScreen from '../screens/ChildProfileScreen';
 import AddGoalScreen from '../screens/AddGoalScreen';
 import ActivityPlanScreen from '../screens/ActivityPlanScreen';
 import FindProvidersScreen from '../screens/FindProvidersScreen';
+import PricingScreen from '../screens/PricingScreen';
+
+// Settings Screens (Session 6 & 7)
+import LocationSettingsScreen from '../screens/LocationSettingsScreen';
+import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
+import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
+import ManageAccountScreen from '../screens/ManageAccountScreen';
+import PrivacyScreen from '../screens/PrivacyScreen';
+import HelpCenterScreen from '../screens/HelpCenterScreen';
+import FeedbackScreen from '../screens/FeedbackScreen';
+import AboutScreen from '../screens/AboutScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -24,7 +35,7 @@ const Tab = createBottomTabNavigator();
 function TabBarIcon({ icon, label, focused }) {
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', paddingTop: 8 }}>
-      <Text style={{ fontSize: 26, marginBottom: 2 }}>{icon}</Text>
+      <Text style={{ fontSize: 20, marginBottom: 2 }}>{icon}</Text>
       <Text 
         style={{ 
           fontSize: 11, 
@@ -39,12 +50,99 @@ function TabBarIcon({ icon, label, focused }) {
   );
 }
 
+// Settings stack: keeps the bottom tab bar visible on every settings screen
+const SettingsStack = createStackNavigator();
+const settingsHeader = {
+  headerStyle: { backgroundColor: '#9333EA' },
+  headerTintColor: '#fff',
+  headerTitleStyle: { fontWeight: 'bold' },
+};
+function SettingsNavigator() {
+  return (
+    <SettingsStack.Navigator
+      screenOptions={({ navigation }) => ({
+        ...settingsHeader,
+        headerLeft: () => (navigation.canGoBack() ? <BackButton onPress={() => navigation.goBack()} /> : null),
+      })}
+    >
+      <SettingsStack.Screen name="SettingsHome" component={SettingsScreen} options={{ headerShown: false }} />
+      <SettingsStack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: 'Profile Settings' }} />
+      <SettingsStack.Screen name="Pricing" component={PricingScreen} options={{ title: 'Choose Your Plan' }} />
+      <SettingsStack.Screen name="ManageAccount" component={ManageAccountScreen} options={{ title: 'Manage Account' }} />
+      <SettingsStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} options={{ title: 'Notification Settings' }} />
+      <SettingsStack.Screen name="LocationSettings" component={LocationSettingsScreen} options={{ title: 'Location Settings' }} />
+      <SettingsStack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Privacy & Security' }} />
+      <SettingsStack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ title: 'Help Center' }} />
+      <SettingsStack.Screen name="Feedback" component={FeedbackScreen} options={{ title: 'Send Feedback' }} />
+      <SettingsStack.Screen name="About" component={AboutScreen} options={{ title: 'About' }} />
+    </SettingsStack.Navigator>
+  );
+}
+
+// Plain-text back button (no image assets), always visible in the purple header
+function BackButton({ onPress }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Go back"
+      style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8 }}
+    >
+      <Text style={{ color: '#fff', fontSize: 30, lineHeight: 32, marginRight: 4 }}>{'\u2039'}</Text>
+      <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Back</Text>
+    </TouchableOpacity>
+  );
+}
+
+// Slim purple bar with a Back button, shown above the main tabs (Home, Kids, Discover, Calendar,
+// Settings) whenever there is somewhere to go back to (e.g. arriving from Activity Plan or Pricing).
+function BackBar({ onPress }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={{ backgroundColor: '#9333EA', paddingTop: insets.top, flexDirection: 'row', alignItems: 'center' }}>
+      <BackButton onPress={onPress} />
+    </View>
+  );
+}
+
+const mainTab = (icon, label, { settings = false } = {}) => ({ navigation, route }) => ({
+  headerShown: true,
+  header: () => {
+    // On the Settings tab, its own sub-screens already show a Back button
+    if (settings) {
+      const inner = getFocusedRouteNameFromRoute(route);
+      if (inner && inner !== 'SettingsHome') return null;
+    }
+    return navigation.canGoBack() ? <BackBar onPress={() => navigation.goBack()} /> : null;
+  },
+  tabBarIcon: ({ focused }) => <TabBarIcon icon={icon} label={label} focused={focused} />,
+});
+
+// Detail screens registered as hidden tabs: they open inside the tab navigator so the
+// bottom tab bar stays visible, but have no tab button of their own.
+const detailScreen = (title) => ({ navigation }) => ({
+  title,
+  headerShown: true,
+  headerStyle: { backgroundColor: '#9333EA' },
+  headerTintColor: '#fff',
+  headerTitleStyle: { fontWeight: 'bold' },
+  headerLeft: () => (
+    <BackButton
+      onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Dashboard'))}
+    />
+  ),
+  tabBarButton: () => null,
+  tabBarItemStyle: { display: 'none' },
+  unmountOnBlur: true,
+});
+
 // Bottom Tab Navigator
-function MainTabs() {
+function Home() {
   const insets = useSafeAreaInsets();
   
   return (
     <Tab.Navigator
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -64,48 +162,33 @@ function MainTabs() {
       <Tab.Screen 
         name="Dashboard" 
         component={DashboardScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon icon="🏠" label="Home" focused={focused} />
-          ),
-        }}
+        options={mainTab('🏠', 'Home')}
       />
       <Tab.Screen 
         name="Kids" 
         component={KidsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon icon="👶" label="Kids" focused={focused} />
-          ),
-        }}
+        options={mainTab('👶', 'Kids')}
       />
       <Tab.Screen 
         name="Discover" 
         component={DiscoverScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon icon="🔍" label="Discover" focused={focused} />
-          ),
-        }}
+        options={mainTab('🔍', 'Discover')}
       />
       <Tab.Screen 
         name="Calendar" 
         component={CalendarScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon icon="📅" label="Calendar" focused={focused} />
-          ),
-        }}
+        options={mainTab('📅', 'Calendar')}
       />
       <Tab.Screen 
         name="Settings" 
-        component={SettingsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon icon="⚙️" label="Settings" focused={focused} />
-          ),
-        }}
+        component={SettingsNavigator}
+        options={mainTab('⚙️', 'Settings', { settings: true })}
       />
+      <Tab.Screen name="ChildProfile" component={ChildProfileScreen} options={detailScreen('Child Profile')} />
+      <Tab.Screen name="AddGoal" component={AddGoalScreen} options={detailScreen('Add Goal')} />
+      <Tab.Screen name="ActivityPlan" component={ActivityPlanScreen} options={detailScreen('Activity Plan')} />
+      <Tab.Screen name="FindProviders" component={FindProvidersScreen} options={detailScreen('Find Activities')} />
+      <Tab.Screen name="Pricing" component={PricingScreen} options={detailScreen('Choose Your Plan')} />
     </Tab.Navigator>
   );
 }
@@ -137,28 +220,8 @@ export default function AppNavigator({ user }) {
           <>
             <Stack.Screen 
               name="Home" 
-              component={MainTabs}
+              component={Home}
               options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="ChildProfile" 
-              component={ChildProfileScreen}
-              options={{ title: 'Child Profile' }}
-            />
-            <Stack.Screen 
-              name="AddGoal" 
-              component={AddGoalScreen}
-              options={{ title: 'Add Goal' }}
-            />
-            <Stack.Screen 
-              name="ActivityPlan" 
-              component={ActivityPlanScreen}
-              options={{ title: 'Activity Plan' }}
-            />
-            <Stack.Screen 
-              name="FindProviders" 
-              component={FindProvidersScreen}
-              options={{ title: 'Find Activities' }}
             />
           </>
         )}

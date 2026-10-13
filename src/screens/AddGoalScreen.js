@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { auth, db } from '../../firebase';
+import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { detectVagueGoal } from '../data/Smartgoalhandling';
+import { showAlert } from '../utils/crossAlert';
+import { useSubscription } from '../context/SubscriptionContext';
 
 export default function AddGoalScreen({ route, navigation }) {
   const { child, mode } = route.params || {};
+  const { checkCanAddChild, checkCanAddGoal } = useSubscription();
   
   const [childName, setChildName] = useState('');
   const [childAge, setChildAge] = useState('');
   const [goal, setGoal] = useState('');
-  const [avatar, setAvatar] = useState('👧');
+  const [avatar, setAvatar] = useState('\uD83D\uDC67');
   
   // Duration/timeline fields
   const [duration, setDuration] = useState('');
   const [durationUnit, setDurationUnit] = useState('months'); // 'months' or 'years'
   const [targetDate, setTargetDate] = useState(null);
 
-  const avatars = ['👧', '👦', '🧒', '👶', '🧑', '👨', '👩'];
+  const avatars = ['\uD83D\uDC67', '\uD83D\uDC66', '\uD83E\uDDD2', '\uD83D\uDC76', '\uD83E\uDDD1', '\uD83D\uDC68', '\uD83D\uDC69'];
   const durationUnits = ['months', 'years'];
 
   const calculateTargetDate = (durationValue, unit) => {
@@ -63,18 +68,101 @@ export default function AddGoalScreen({ route, navigation }) {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
 
+    // Validate basic fields first
     if (mode === 'newChild') {
-      // Adding a new child
       if (!childName || !childAge || !goal) {
-        Alert.alert('Error', 'Please fill in all required fields');
+        showAlert('Error', 'Please fill in all required fields');
         return;
       }
-
-      if (!duration || isNaN(duration)) {
-        Alert.alert('Error', 'Please enter a valid timeline for the goal');
+    } else if (mode === 'addGoal') {
+      if (!goal) {
+        showAlert('Error', 'Please enter a goal');
         return;
       }
+    }
 
+    if (!duration || isNaN(duration)) {
+      showAlert('Timeline needed', 'Please enter how long (a number) you want to work toward this goal.');
+      return;
+    }
+
+    // ===== VAGUE GOAL DETECTION =====
+    const vagueGoalInfo = detectVagueGoal(goal);
+    
+    if (vagueGoalInfo) {
+      // Show friendly clarification alert
+      showAlert(
+        '\uD83C\uDFAF Let\'s Get Specific!',
+        vagueGoalInfo.clarificationPrompt + '\n\nWould you like to make this goal more specific?',
+        [
+          {
+            text: 'Make it Specific',
+            onPress: () => {
+              showVagueGoalSuggestions(vagueGoalInfo);
+            }
+          },
+          {
+            text: 'Continue Anyway',
+            onPress: () => {
+              proceedWithGoalSubmission();
+            },
+            style: 'cancel'
+          }
+        ]
+      );
+      return; // Stop here, don't submit yet
+    }
+    
+    // If not vague, proceed normally
+    proceedWithGoalSubmission();
+  };
+
+  // Helper function to show category suggestions
+  const showVagueGoalSuggestions = (vagueGoalInfo) => {
+    const categoryNames = {
+      business: 'Business & Leadership',
+      publicSpeaking: 'Public Speaking',
+      mathematics: 'Math Excellence',
+      writing: 'Writing & Literature',
+      sports: 'Sports & Athletics',
+      martialArts: 'Martial Arts',
+      performingArts: 'Performing Arts',
+      visualArts: 'Visual Arts',
+      music: 'Music',
+      activism: 'Community Service',
+      teaching: 'Teaching & Mentoring',
+      programming: 'Coding & Technology',
+      filmmaking: 'Film & Video Making',
+      photography: 'Photography',
+      culinary: 'Cooking & Culinary Arts',
+      languages: 'Foreign Languages'
+    };
+
+    const suggestions = vagueGoalInfo.suggestedCategories
+      .map(cat => `\u2022 ${categoryNames[cat] || cat}`)
+      .join('\n');
+
+    showAlert(
+      '\uD83D\uDCA1 Popular paths for this goal:',
+      suggestions + '\n\nTry describing the goal using one of these areas, or keep it as is.',
+      [
+        { 
+          text: 'Got it!',
+          style: 'default'
+        }
+      ]
+    );
+  };
+
+  // Extracted submission logic
+  const proceedWithGoalSubmission = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    if (mode === 'newChild') {
+      // Authoritative limit check at submit time (covers stale screens)
+      if (!(await checkCanAddChild(navigation))) return;
+      // Adding a new child
       try {
         const goalData = {
           name: goal,
@@ -87,7 +175,7 @@ export default function AddGoalScreen({ route, navigation }) {
           progressPercentage: 0
         };
 
-        const docRef = await db.collection('children').add({
+      const docRef = await addDoc(collection(db, 'children'), {
           userId,
           name: childName,
           age: parseInt(childAge),
@@ -97,33 +185,28 @@ export default function AddGoalScreen({ route, navigation }) {
         });
         
         // Get the newly created child data
-        const childDoc = await docRef.get();
+        const childDoc = await getDoc(docRef);
         const newChild = {
           id: childDoc.id,
           ...childDoc.data()
         };
         
-        Alert.alert('Success', `${childName}'s profile created!`, [
+        showAlert('Success', `${childName}'s profile created!`, [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('ChildProfile', { child: newChild })
+            onPress: () => navigation.navigate('Home', { screen: 'Kids' })
           }
         ]);
       } catch (error) {
-        Alert.alert('Error', error.message);
+        showAlert('Error', error.message);
       }
     } else if (mode === 'addGoal') {
+      // Re-read the child so the goal count is current, then check the limit
+      try {
+        const fresh = await getDoc(doc(db, 'children', child.id));
+        if (!checkCanAddGoal({ goals: fresh.data()?.goals || [] }, navigation)) return;
+      } catch (e) { /* fall through; server-side limit still applies */ }
       // Adding a goal to existing child
-      if (!goal) {
-        Alert.alert('Error', 'Please enter a goal');
-        return;
-      }
-
-      if (!duration || isNaN(duration)) {
-        Alert.alert('Error', 'Please enter a valid timeline for the goal');
-        return;
-      }
-
       try {
         const goalData = {
           name: goal,
@@ -137,16 +220,16 @@ export default function AddGoalScreen({ route, navigation }) {
         };
 
         const updatedGoals = [...(child.goals || []), goalData];
-        await db.collection('children').doc(child.id).update({ goals: updatedGoals });
+        await updateDoc(doc(db, 'children', child.id), { goals: updatedGoals });
         
-        Alert.alert('Success', 'Goal added successfully!', [
+        showAlert('Success', 'Goal added successfully!', [
           {
             text: 'OK',
             onPress: () => navigation.goBack()
           }
         ]);
       } catch (error) {
-        Alert.alert('Error', error.message);
+        showAlert('Error', error.message);
       }
     }
   };
@@ -239,7 +322,7 @@ export default function AddGoalScreen({ route, navigation }) {
           <View style={styles.durationContainer}>
             <TextInput
               style={[styles.input, styles.durationInput]}
-              placeholder="12"
+              placeholder="e.g. 12 (required)"
               value={duration}
               onChangeText={handleDurationChange}
               keyboardType="number-pad"

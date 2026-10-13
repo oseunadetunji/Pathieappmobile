@@ -1,10 +1,16 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { auth, db } from '../../firebase';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
+import { auth, db, functions } from '../../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { useSubscription } from '../context/SubscriptionContext';
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { signOut, deleteUser } from 'firebase/auth';
+import { showAlert } from '../utils/crossAlert';
 
 export default function ManageAccountScreen({ navigation }) {
+  const { isFamily } = useSubscription();
   const handlePauseAccount = () => {
-    Alert.alert(
+    showAlert(
       'Pause Account',
       'This will temporarily deactivate your account. Your data will be saved and you can reactivate anytime by signing back in.\n\nAre you sure you want to pause your account?',
       [
@@ -16,26 +22,26 @@ export default function ManageAccountScreen({ navigation }) {
             try {
               const user = auth.currentUser;
               
-              await db.collection('users').doc(user.uid).update({
+              await updateDoc(doc(db, 'users', user.uid), {
                 accountStatus: 'paused',
                 pausedAt: new Date()
               });
 
-              Alert.alert(
+              showAlert(
                 'Account Paused',
                 'Your account has been paused. Sign in again anytime to reactivate.',
                 [
                   {
                     text: 'OK',
                     onPress: () => {
-                      auth.signOut();
+                      signOut(auth);
                       navigation.navigate('Auth');
                     }
                   }
                 ]
               );
             } catch (error) {
-              Alert.alert('Error', 'Failed to pause account. Please try again.');
+              showAlert('Error', 'Failed to pause account. Please try again.');
             }
           }
         }
@@ -44,9 +50,9 @@ export default function ManageAccountScreen({ navigation }) {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    showAlert(
       '⚠️ Delete Account',
-      'This action is permanent and cannot be undone.\n\nAll your data will be deleted including:\n• Children profiles\n• Goals and activities\n• Scheduled events\n• Usage data\n\nConsider pausing your account instead if you might return later.',
+      'This action is permanent and cannot be undone.\n\nAll your data will be deleted including:\n• Children profiles\n• Goals and activities\n• Scheduled events\n• Usage data\n\nIf you have a Family subscription, it will be set to end at the close of your current billing period. It will not renew and you will not be charged again.\n\nConsider pausing your account instead if you might return later.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -63,7 +69,7 @@ export default function ManageAccountScreen({ navigation }) {
   };
 
   const confirmDeleteAccount = () => {
-    Alert.alert(
+    showAlert(
       'Final Confirmation',
       'Type DELETE to confirm account deletion',
       [
@@ -72,25 +78,27 @@ export default function ManageAccountScreen({ navigation }) {
           text: 'Confirm',
           style: 'destructive',
           onPress: () => {
-            Alert.prompt(
-              'Type DELETE',
-              'Enter DELETE to confirm',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Delete',
-                  style: 'destructive',
-                  onPress: async (text) => {
-                    if (text === 'DELETE') {
-                      await deleteAccountData();
-                    } else {
-                      Alert.alert('Cancelled', 'Text did not match. Account deletion cancelled.');
-                    }
-                  }
-                }
-              ],
-              'plain-text'
-            );
+            const onTyped = async (text) => {
+              if (text === 'DELETE') {
+                await deleteAccountData();
+              } else {
+                showAlert('Cancelled', 'Text did not match. Account deletion cancelled.');
+              }
+            };
+            if (Platform.OS === 'web') {
+              const text = window.prompt('Type DELETE to confirm account deletion');
+              if (text !== null) onTyped(text);
+            } else {
+              Alert.prompt(
+                'Type DELETE',
+                'Enter DELETE to confirm',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Delete', style: 'destructive', onPress: onTyped }
+                ],
+                'plain-text'
+              );
+            }
           }
         }
       ]
@@ -102,26 +110,40 @@ export default function ManageAccountScreen({ navigation }) {
       const user = auth.currentUser;
       const userId = user.uid;
 
+      // Cancel any Stripe subscription first so a deleted account is never billed again.
+      try {
+        await httpsCallable(functions, 'prepareAccountDeletion')();
+      } catch (e) {
+        console.error('prepareAccountDeletion failed:', e);
+        if (isFamily) {
+          showAlert(
+            'Could not cancel your subscription',
+            "We couldn't cancel your Family subscription, so your account has not been deleted and you haven't been charged anything new. Please open Settings > Plan > Manage or cancel subscription, cancel it there, then try deleting again."
+          );
+          return;
+        }
+      }
+
       // Delete all user data from Firestore
       const collections = ['children', 'customActivities', 'activities', 'feedback'];
       
       for (const collectionName of collections) {
-        const snapshot = await db.collection(collectionName)
-          .where('userId', '==', userId)
-          .get();
+        const snapshot = await getDocs(
+          query(collection(db, collectionName), where('userId', '==', userId))
+        );
         
         for (const document of snapshot.docs) {
-          await db.collection(collectionName).doc(document.id).delete();
+          await deleteDoc(doc(db, collectionName, document.id));
         }
       }
 
       // Delete user document
-      await db.collection('users').doc(userId).delete();
+      await deleteDoc(doc(db, 'users', userId));
 
       // Delete authentication account
-      await user.delete();
+      await deleteUser(user);
 
-      Alert.alert(
+      showAlert(
         'Account Deleted',
         'Your account and all data have been permanently deleted.',
         [
@@ -133,12 +155,12 @@ export default function ManageAccountScreen({ navigation }) {
       );
     } catch (error) {
       if (error.code === 'auth/requires-recent-login') {
-        Alert.alert(
+        showAlert(
           'Re-authentication Required',
-          'For security, please sign out and sign back in, then try deleting your account again.'
+          'For security, please sign out and sign back in, then try deleting your account again. (If you had a subscription, it is already set to end and will not renew.)'
         );
       } else {
-        Alert.alert('Error', 'Failed to delete account. Please contact support.');
+        showAlert('Error', 'Failed to delete account. Please contact support.');
       }
     }
   };

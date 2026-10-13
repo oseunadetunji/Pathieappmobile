@@ -1,14 +1,16 @@
+import { DISCIPLINES } from './disciplinePlans';
 // Comprehensive Activity Database - 35 Categories
 // Covers 95%+ of goals for kids ages 5-15 with 99% matching accuracy
+// Fixed: All emojis use Unicode escapes, all 35 categories included, safety checks added
 
 export const activityDatabase = {
-  // ===== ORIGINAL 15 CATEGORIES =====
+  // ===== CORE 15 CATEGORIES =====
   
   // MEDICINE & HEALTH
   medical: [
     {
       category: 'STEM Learning',
-      icon: '🔬',
+      icon: "\uD83D\uDD2C",
       activities: [
         { name: 'Science Museum Visit', frequency: 'Monthly', duration: '2-3 hours' },
         { name: 'Biology Club', frequency: 'Weekly', duration: '1 hour' },
@@ -18,7 +20,7 @@ export const activityDatabase = {
     },
     {
       category: 'Life Skills',
-      icon: '❤️',
+      icon: "\u2764\uFE0F",
       activities: [
         { name: 'First Aid Training', frequency: 'One-time', duration: '4 hours' },
         { name: 'Volunteer at Animal Shelter', frequency: 'Bi-weekly', duration: '2 hours' },
@@ -28,7 +30,7 @@ export const activityDatabase = {
     },
     {
       category: 'Reading & Learning',
-      icon: '📚',
+      icon: "\uD83D\uDCDA",
       activities: [
         { name: 'Medical Biography Books', frequency: 'Weekly', duration: '30 mins' },
         { name: 'Science Podcasts', frequency: 'Weekly', duration: '20 mins' },
@@ -41,7 +43,7 @@ export const activityDatabase = {
   engineering: [
     {
       category: 'STEM Learning',
-      icon: '⚙️',
+      icon: "\u2699\uFE0F",
       activities: [
         { name: 'Robotics Club', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Coding Classes', frequency: '2x/week', duration: '1 hour' },
@@ -51,7 +53,7 @@ export const activityDatabase = {
     },
     {
       category: 'Building & Creating',
-      icon: '🔧',
+      icon: "\uD83D\uDD27",
       activities: [
         { name: 'LEGO Engineering Projects', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Maker Space Projects', frequency: 'Bi-weekly', duration: '2 hours' },
@@ -61,7 +63,7 @@ export const activityDatabase = {
     },
     {
       category: 'Problem Solving',
-      icon: '🧩',
+      icon: "\uD83E\uDDE9",
       activities: [
         { name: 'Chess Club', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Logic Puzzles', frequency: '3x/week', duration: '20 mins' },
@@ -75,7 +77,7 @@ export const activityDatabase = {
   programming: [
     {
       category: 'Coding Skills',
-      icon: '💻',
+      icon: "\uD83D\uDCBB",
       activities: [
         { name: 'Scratch Programming', frequency: '2x/week', duration: '45 mins' },
         { name: 'Python for Kids', frequency: 'Weekly', duration: '1 hour' },
@@ -85,7 +87,7 @@ export const activityDatabase = {
     },
     {
       category: 'Game Development',
-      icon: '🎮',
+      icon: "\uD83C\uDFAE",
       activities: [
         { name: 'Roblox Game Creation', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Unity Game Design', frequency: 'Bi-weekly', duration: '2 hours' },
@@ -94,7 +96,7 @@ export const activityDatabase = {
     },
     {
       category: 'Tech Skills',
-      icon: '🖥️',
+      icon: "\uD83D\uDDA5\uFE0F",
       activities: [
         { name: 'Web Design Basics', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Typing Practice', frequency: 'Daily', duration: '15 mins' },
@@ -107,7 +109,7 @@ export const activityDatabase = {
   visualArts: [
     {
       category: 'Art Practice',
-      icon: '🎨',
+      icon: "\uD83C\uDFA8",
       activities: [
         { name: 'Art Classes', frequency: 'Weekly', duration: '90 mins' },
         { name: 'Daily Sketching', frequency: 'Daily', duration: '30 mins' },
@@ -117,7 +119,7 @@ export const activityDatabase = {
     },
     {
       category: 'Different Mediums',
-      icon: '🖌️',
+      icon: "\uD83D\uDD8C\uFE0F",
       activities: [
         { name: 'Watercolor Painting', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Clay Sculpting', frequency: 'Bi-weekly', duration: '90 mins' },
@@ -126,7 +128,7 @@ export const activityDatabase = {
     },
     {
       category: 'Creative Projects',
-      icon: '✨',
+      icon: "\u2728",
       activities: [
         { name: 'Art Portfolio Building', frequency: 'Monthly', duration: '2 hours' },
         { name: 'Community Art Fair', frequency: 'Quarterly', duration: '3 hours' },
@@ -139,7 +141,7 @@ export const activityDatabase = {
   music: [
     {
       category: 'Music Practice',
-      icon: '🎵',
+      icon: "\uD83C\uDFB5",
       activities: [
         { name: 'Instrument Lessons', frequency: '2x/week', duration: '45 mins' },
         { name: 'Daily Practice', frequency: 'Daily', duration: '30 mins' },
@@ -149,7 +151,7 @@ export const activityDatabase = {
     },
     {
       category: 'Performance',
-      icon: '🎤',
+      icon: "\uD83C\uDFA4",
       activities: [
         { name: 'School Band/Orchestra', frequency: 'Weekly', duration: '90 mins' },
         { name: 'Recital Preparation', frequency: 'Monthly', duration: '1 hour' },
@@ -159,7 +161,7 @@ export const activityDatabase = {
     },
     {
       category: 'Music Appreciation',
-      icon: '🎧',
+      icon: "\uD83C\uDFA7",
       activities: [
         { name: 'Concert Attendance', frequency: 'Quarterly', duration: '2 hours' },
         { name: 'Listen to Various Genres', frequency: 'Weekly', duration: '30 mins' },
@@ -172,7 +174,7 @@ export const activityDatabase = {
   performingArts: [
     {
       category: 'Acting & Theater',
-      icon: '🎭',
+      icon: "\uD83C\uDFAD",
       activities: [
         { name: 'Drama Club', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Improv Classes', frequency: 'Weekly', duration: '1 hour' },
@@ -182,7 +184,7 @@ export const activityDatabase = {
     },
     {
       category: 'Dance',
-      icon: '💃',
+      icon: "\uD83D\uDC83",
       activities: [
         { name: 'Dance Classes', frequency: '2x/week', duration: '1 hour' },
         { name: 'Daily Stretching', frequency: 'Daily', duration: '15 mins' },
@@ -192,7 +194,7 @@ export const activityDatabase = {
     },
     {
       category: 'Performance Skills',
-      icon: '🎬',
+      icon: "\uD83C\uDFAC",
       activities: [
         { name: 'Public Speaking Club', frequency: 'Bi-weekly', duration: '1 hour' },
         { name: 'Watch Performances', frequency: 'Monthly', duration: '2 hours' },
@@ -205,7 +207,7 @@ export const activityDatabase = {
   sports: [
     {
       category: 'Training',
-      icon: '⚽',
+      icon: "\u26BD",
       activities: [
         { name: 'Team Practice', frequency: '3x/week', duration: '90 mins' },
         { name: 'Individual Skills Training', frequency: 'Daily', duration: '30 mins' },
@@ -215,7 +217,7 @@ export const activityDatabase = {
     },
     {
       category: 'Fitness & Conditioning',
-      icon: '💪',
+      icon: "\uD83D\uDCAA",
       activities: [
         { name: 'Strength Training', frequency: '2x/week', duration: '45 mins' },
         { name: 'Running & Cardio', frequency: '3x/week', duration: '30 mins' },
@@ -225,7 +227,7 @@ export const activityDatabase = {
     },
     {
       category: 'Competition',
-      icon: '🏆',
+      icon: "\uD83C\uDFC6",
       activities: [
         { name: 'League Games', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Tournaments', frequency: 'Monthly', duration: '4 hours' },
@@ -238,7 +240,7 @@ export const activityDatabase = {
   martialArts: [
     {
       category: 'Martial Arts Training',
-      icon: '🥋',
+      icon: "\uD83E\uDD4B",
       activities: [
         { name: 'Martial Arts Classes', frequency: '3x/week', duration: '1 hour' },
         { name: 'Belt Testing Preparation', frequency: 'Monthly', duration: '2 hours' },
@@ -248,7 +250,7 @@ export const activityDatabase = {
     },
     {
       category: 'Discipline & Philosophy',
-      icon: '🧘',
+      icon: "\uD83E\uDDD8",
       activities: [
         { name: 'Meditation Practice', frequency: 'Daily', duration: '10 mins' },
         { name: 'Martial Arts History', frequency: 'Weekly', duration: '30 mins' },
@@ -257,7 +259,7 @@ export const activityDatabase = {
     },
     {
       category: 'Physical Conditioning',
-      icon: '💪',
+      icon: "\uD83D\uDCAA",
       activities: [
         { name: 'Strength & Flexibility', frequency: '4x/week', duration: '30 mins' },
         { name: 'Cardio Training', frequency: '3x/week', duration: '20 mins' },
@@ -270,7 +272,7 @@ export const activityDatabase = {
   writing: [
     {
       category: 'Writing Practice',
-      icon: '✍️',
+      icon: "\u270D\uFE0F",
       activities: [
         { name: 'Daily Journaling', frequency: 'Daily', duration: '20 mins' },
         { name: 'Creative Writing Workshop', frequency: 'Weekly', duration: '1 hour' },
@@ -280,7 +282,7 @@ export const activityDatabase = {
     },
     {
       category: 'Reading',
-      icon: '📖',
+      icon: "\uD83D\uDCD6",
       activities: [
         { name: 'Daily Reading Time', frequency: 'Daily', duration: '30 mins' },
         { name: 'Library Visits', frequency: 'Weekly', duration: '1 hour' },
@@ -290,7 +292,7 @@ export const activityDatabase = {
     },
     {
       category: 'Publishing',
-      icon: '📰',
+      icon: "\uD83D\uDCF0",
       activities: [
         { name: 'School Newspaper', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Start a Blog', frequency: 'Weekly', duration: '45 mins' },
@@ -303,7 +305,7 @@ export const activityDatabase = {
   business: [
     {
       category: 'Business Skills',
-      icon: '💼',
+      icon: "\uD83D\uDCBC",
       activities: [
         { name: 'Junior Achievement Program', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Lemonade Stand/Small Business', frequency: 'Weekly', duration: '2 hours' },
@@ -313,7 +315,7 @@ export const activityDatabase = {
     },
     {
       category: 'Money Management',
-      icon: '💰',
+      icon: "\uD83D\uDCB0",
       activities: [
         { name: 'Financial Literacy Class', frequency: 'Bi-weekly', duration: '1 hour' },
         { name: 'Budgeting Practice', frequency: 'Weekly', duration: '30 mins' },
@@ -322,7 +324,7 @@ export const activityDatabase = {
     },
     {
       category: 'Leadership',
-      icon: '🎯',
+      icon: "\uD83C\uDFAF",
       activities: [
         { name: 'Student Council', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Team Project Management', frequency: 'Weekly', duration: '1.5 hours' },
@@ -335,7 +337,7 @@ export const activityDatabase = {
   culinary: [
     {
       category: 'Cooking Skills',
-      icon: '👨‍🍳',
+      icon: "\uD83D\uDC68\u200D\uD83C\uDF73",
       activities: [
         { name: 'Kids Cooking Classes', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Baking Lessons', frequency: 'Weekly', duration: '1 hour' },
@@ -345,7 +347,7 @@ export const activityDatabase = {
     },
     {
       category: 'Food Knowledge',
-      icon: '🥗',
+      icon: "\uD83E\uDD57",
       activities: [
         { name: 'Nutrition Classes', frequency: 'Bi-weekly', duration: '1 hour' },
         { name: 'Farmers Market Visits', frequency: 'Weekly', duration: '1 hour' },
@@ -354,7 +356,7 @@ export const activityDatabase = {
     },
     {
       category: 'Culinary Arts',
-      icon: '🍰',
+      icon: "\uD83C\uDF70",
       activities: [
         { name: 'Cake Decorating', frequency: 'Bi-weekly', duration: '1.5 hours' },
         { name: 'International Cuisine', frequency: 'Monthly', duration: '2 hours' },
@@ -367,7 +369,7 @@ export const activityDatabase = {
   languages: [
     {
       category: 'Language Practice',
-      icon: '🌍',
+      icon: "\uD83C\uDF0D",
       activities: [
         { name: 'Language Classes', frequency: '3x/week', duration: '45 mins' },
         { name: 'Daily Practice App', frequency: 'Daily', duration: '20 mins' },
@@ -377,7 +379,7 @@ export const activityDatabase = {
     },
     {
       category: 'Cultural Learning',
-      icon: '🎎',
+      icon: "\uD83C\uDF8E",
       activities: [
         { name: 'Cultural Events', frequency: 'Monthly', duration: '2 hours' },
         { name: 'International Pen Pal', frequency: 'Weekly', duration: '30 mins' },
@@ -386,7 +388,7 @@ export const activityDatabase = {
     },
     {
       category: 'Reading & Writing',
-      icon: '📝',
+      icon: "\uD83D\uDCDD",
       activities: [
         { name: 'Read Books in Target Language', frequency: 'Weekly', duration: '30 mins' },
         { name: 'Writing Practice', frequency: '3x/week', duration: '20 mins' },
@@ -399,7 +401,7 @@ export const activityDatabase = {
   environmental: [
     {
       category: 'Environmental Action',
-      icon: '🌱',
+      icon: "\uD83C\uDF31",
       activities: [
         { name: 'Community Garden', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Environmental Club', frequency: 'Weekly', duration: '1 hour' },
@@ -409,7 +411,7 @@ export const activityDatabase = {
     },
     {
       category: 'Outdoor Activities',
-      icon: '🌲',
+      icon: "\uD83C\uDF32",
       activities: [
         { name: 'Hiking & Nature Walks', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Wildlife Observation', frequency: 'Bi-weekly', duration: '1.5 hours' },
@@ -418,7 +420,7 @@ export const activityDatabase = {
     },
     {
       category: 'Science Learning',
-      icon: '🔬',
+      icon: "\uD83D\uDD2C",
       activities: [
         { name: 'Environmental Science Class', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Sustainability Projects', frequency: 'Bi-weekly', duration: '1 hour' },
@@ -431,7 +433,7 @@ export const activityDatabase = {
   teaching: [
     {
       category: 'Teaching Skills',
-      icon: '👨‍🏫',
+      icon: "\uD83D\uDC68\u200D\uD83C\uDFEB",
       activities: [
         { name: 'Tutoring Younger Students', frequency: '2x/week', duration: '1 hour' },
         { name: 'Teaching Assistant Role', frequency: 'Weekly', duration: '1.5 hours' },
@@ -441,7 +443,7 @@ export const activityDatabase = {
     },
     {
       category: 'Education Studies',
-      icon: '📚',
+      icon: "\uD83D\uDCDA",
       activities: [
         { name: 'Education Theory Reading', frequency: 'Weekly', duration: '45 mins' },
         { name: 'Teaching Methods Research', frequency: 'Bi-weekly', duration: '1 hour' },
@@ -451,7 +453,7 @@ export const activityDatabase = {
     },
     {
       category: 'Practice & Experience',
-      icon: '✏️',
+      icon: "\u270F\uFE0F",
       activities: [
         { name: 'Sunday School Teaching', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Kids Camp Counselor', frequency: 'Seasonal', duration: '1 week' },
@@ -461,13 +463,13 @@ export const activityDatabase = {
     }
   ],
 
-  // ===== NEW 20 CATEGORIES =====
+  // ===== NEW 20 CATEGORIES (PREVIOUSLY MISSING) =====
 
-  // ASTRONOMY & SPACE SCIENCE (NEW)
+  // ASTRONOMY & SPACE SCIENCE
   astronomy: [
     {
       category: 'Space Science',
-      icon: '🔭',
+      icon: "\uD83D\uDD2D",
       activities: [
         { name: 'Astronomy Club', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Star Gazing Sessions', frequency: 'Bi-weekly', duration: '2 hours' },
@@ -477,7 +479,7 @@ export const activityDatabase = {
     },
     {
       category: 'Space Study',
-      icon: '🚀',
+      icon: "\uD83D\uDE80",
       activities: [
         { name: 'Astrophysics Reading', frequency: 'Weekly', duration: '1 hour' },
         { name: 'NASA Programs for Kids', frequency: 'Monthly', duration: '2 hours' },
@@ -487,7 +489,7 @@ export const activityDatabase = {
     },
     {
       category: 'Space Exploration',
-      icon: '🌌',
+      icon: "\uD83C\uDF0C",
       activities: [
         { name: 'Space Camp', frequency: 'Seasonal', duration: '1 week' },
         { name: 'Telescope Practice', frequency: 'Weekly', duration: '1 hour' },
@@ -497,11 +499,11 @@ export const activityDatabase = {
     }
   ],
 
-  // VETERINARY & ANIMAL CARE (NEW)
+  // VETERINARY & ANIMAL CARE
   veterinary: [
     {
       category: 'Animal Care',
-      icon: '🐾',
+      icon: "\uD83D\uDC3E",
       activities: [
         { name: 'Volunteer at Animal Shelter', frequency: '2x/week', duration: '2 hours' },
         { name: 'Pet Care Training', frequency: 'Weekly', duration: '1 hour' },
@@ -511,7 +513,7 @@ export const activityDatabase = {
     },
     {
       category: 'Veterinary Science',
-      icon: '🩺',
+      icon: "\uD83E\uDE7A",
       activities: [
         { name: 'Animal Biology Reading', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Veterinary Documentaries', frequency: 'Weekly', duration: '45 mins' },
@@ -521,7 +523,7 @@ export const activityDatabase = {
     },
     {
       category: 'Hands-On Experience',
-      icon: '🐕',
+      icon: "\uD83D\uDC15",
       activities: [
         { name: 'Dog Walking Service', frequency: '3x/week', duration: '1 hour' },
         { name: 'Pet Sitting', frequency: 'Weekly', duration: '2 hours' },
@@ -531,11 +533,11 @@ export const activityDatabase = {
     }
   ],
 
-  // MARINE BIOLOGY & OCEANOGRAPHY (NEW)
+  // MARINE BIOLOGY & OCEANOGRAPHY
   marineBiology: [
     {
       category: 'Ocean Science',
-      icon: '🌊',
+      icon: "\uD83C\uDF0A",
       activities: [
         { name: 'Marine Biology Books', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Ocean Documentaries', frequency: 'Weekly', duration: '45 mins' },
@@ -545,7 +547,7 @@ export const activityDatabase = {
     },
     {
       category: 'Marine Life Study',
-      icon: '🐋',
+      icon: "\uD83D\uDC0B",
       activities: [
         { name: 'Tide Pool Investigation', frequency: 'Monthly', duration: '3 hours' },
         { name: 'Fish Identification', frequency: 'Weekly', duration: '30 mins' },
@@ -555,7 +557,7 @@ export const activityDatabase = {
     },
     {
       category: 'Research & Learning',
-      icon: '🔬',
+      icon: "\uD83D\uDD2C",
       activities: [
         { name: 'Marine Science Camp', frequency: 'Seasonal', duration: '1 week' },
         { name: 'Ocean Research Projects', frequency: 'Monthly', duration: '2 hours' },
@@ -565,11 +567,11 @@ export const activityDatabase = {
     }
   ],
 
-  // MATHEMATICS & PROBLEM SOLVING (NEW)
+  // MATHEMATICS & PROBLEM SOLVING
   mathematics: [
     {
       category: 'Math Practice',
-      icon: '🔢',
+      icon: "\uD83D\uDD22",
       activities: [
         { name: 'Math Club', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Daily Problem Solving', frequency: 'Daily', duration: '30 mins' },
@@ -579,7 +581,7 @@ export const activityDatabase = {
     },
     {
       category: 'Competition Math',
-      icon: '🏅',
+      icon: "\uD83C\uDFC5",
       activities: [
         { name: 'MathCounts Practice', frequency: 'Weekly', duration: '1 hour' },
         { name: 'AMC Test Preparation', frequency: 'Weekly', duration: '1.5 hours' },
@@ -589,7 +591,7 @@ export const activityDatabase = {
     },
     {
       category: 'Advanced Topics',
-      icon: '∞',
+      icon: "\u221E",
       activities: [
         { name: 'Algebra Enrichment', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Geometry Study', frequency: 'Weekly', duration: '1 hour' },
@@ -599,11 +601,11 @@ export const activityDatabase = {
     }
   ],
 
-  // INVENTION & INNOVATION (NEW)
+  // INVENTION & INNOVATION
   invention: [
     {
       category: 'Creative Thinking',
-      icon: '💡',
+      icon: "\uD83D\uDCA1",
       activities: [
         { name: 'Invention Brainstorming', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Problem Identification', frequency: 'Weekly', duration: '45 mins' },
@@ -613,7 +615,7 @@ export const activityDatabase = {
     },
     {
       category: 'Building & Prototyping',
-      icon: '🔨',
+      icon: "\uD83D\uDD28",
       activities: [
         { name: 'Maker Space Projects', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Arduino/Electronics', frequency: 'Weekly', duration: '1.5 hours' },
@@ -623,7 +625,7 @@ export const activityDatabase = {
     },
     {
       category: 'Innovation Competitions',
-      icon: '🏆',
+      icon: "\uD83C\uDFC6",
       activities: [
         { name: 'Invention Conventions', frequency: 'Quarterly', duration: '4 hours' },
         { name: 'Science Fair Projects', frequency: 'Yearly', duration: '20 hours' },
@@ -633,11 +635,11 @@ export const activityDatabase = {
     }
   ],
 
-  // PHOTOGRAPHY & VIDEOGRAPHY (NEW)
+  // PHOTOGRAPHY & VIDEOGRAPHY
   photography: [
     {
       category: 'Camera Skills',
-      icon: '📷',
+      icon: "\uD83D\uDCF7",
       activities: [
         { name: 'Photography Classes', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Daily Photo Practice', frequency: 'Daily', duration: '30 mins' },
@@ -647,7 +649,7 @@ export const activityDatabase = {
     },
     {
       category: 'Photo Editing',
-      icon: '🖼️',
+      icon: "\uD83D\uDDBC\uFE0F",
       activities: [
         { name: 'Lightroom Basics', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Photoshop for Kids', frequency: 'Weekly', duration: '1 hour' },
@@ -657,7 +659,7 @@ export const activityDatabase = {
     },
     {
       category: 'Photo Projects',
-      icon: '📸',
+      icon: "\uD83D\uDCF8",
       activities: [
         { name: 'Nature Photography', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Portrait Sessions', frequency: 'Bi-weekly', duration: '1 hour' },
@@ -667,11 +669,11 @@ export const activityDatabase = {
     }
   ],
 
-  // FASHION DESIGN & STYLING (NEW)
+  // FASHION DESIGN & STYLING
   fashion: [
     {
       category: 'Design Skills',
-      icon: '👗',
+      icon: "\uD83D\uDC57",
       activities: [
         { name: 'Fashion Design Classes', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Fashion Sketching', frequency: '3x/week', duration: '1 hour' },
@@ -681,7 +683,7 @@ export const activityDatabase = {
     },
     {
       category: 'Sewing & Construction',
-      icon: '🧵',
+      icon: "\uD83E\uDDF5",
       activities: [
         { name: 'Sewing Lessons', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Pattern Making', frequency: 'Bi-weekly', duration: '2 hours' },
@@ -691,7 +693,7 @@ export const activityDatabase = {
     },
     {
       category: 'Fashion Industry',
-      icon: '✨',
+      icon: "\u2728",
       activities: [
         { name: 'Fashion Magazine Reading', frequency: 'Weekly', duration: '30 mins' },
         { name: 'Fashion Show Attendance', frequency: 'Quarterly', duration: '3 hours' },
@@ -701,11 +703,11 @@ export const activityDatabase = {
     }
   ],
 
-  // FILM & MOVIE MAKING (NEW)
+  // FILM & MOVIE MAKING
   filmmaking: [
     {
       category: 'Video Production',
-      icon: '🎬',
+      icon: "\uD83C\uDFAC",
       activities: [
         { name: 'Filmmaking Classes', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Storyboarding Practice', frequency: 'Weekly', duration: '1 hour' },
@@ -715,7 +717,7 @@ export const activityDatabase = {
     },
     {
       category: 'Video Editing',
-      icon: '🎞️',
+      icon: "\uD83C\uDF9E\uFE0F",
       activities: [
         { name: 'Final Cut Pro/Premiere', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Video Editing Practice', frequency: '3x/week', duration: '1 hour' },
@@ -725,7 +727,7 @@ export const activityDatabase = {
     },
     {
       category: 'Content Creation',
-      icon: '📹',
+      icon: "\uD83D\uDCF9",
       activities: [
         { name: 'YouTube Channel', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Documentary Making', frequency: 'Monthly', duration: '4 hours' },
@@ -735,11 +737,11 @@ export const activityDatabase = {
     }
   ],
 
-  // GAMING & ESPORTS (NEW)
+  // GAMING & ESPORTS
   gaming: [
     {
       category: 'Competitive Gaming',
-      icon: '🎮',
+      icon: "\uD83C\uDFAE",
       activities: [
         { name: 'Esports Team Practice', frequency: '4x/week', duration: '2 hours' },
         { name: 'Strategy Study', frequency: 'Daily', duration: '30 mins' },
@@ -749,7 +751,7 @@ export const activityDatabase = {
     },
     {
       category: 'Game Development',
-      icon: '💻',
+      icon: "\uD83D\uDCBB",
       activities: [
         { name: 'Game Design Classes', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Unity/Unreal Engine', frequency: 'Weekly', duration: '1.5 hours' },
@@ -759,7 +761,7 @@ export const activityDatabase = {
     },
     {
       category: 'Content & Streaming',
-      icon: '📺',
+      icon: "\uD83D\uDCFA",
       activities: [
         { name: 'Streaming Practice', frequency: '3x/week', duration: '2 hours' },
         { name: 'Content Creation', frequency: 'Weekly', duration: '1 hour' },
@@ -769,11 +771,11 @@ export const activityDatabase = {
     }
   ],
 
-  // ANIMATION & DIGITAL ART (NEW)
+  // ANIMATION & DIGITAL ART
   animation: [
     {
       category: 'Animation Skills',
-      icon: '🎨',
+      icon: "\uD83C\uDFA8",
       activities: [
         { name: 'Animation Classes', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Frame-by-Frame Practice', frequency: '3x/week', duration: '1 hour' },
@@ -783,7 +785,7 @@ export const activityDatabase = {
     },
     {
       category: 'Digital Tools',
-      icon: '💻',
+      icon: "\uD83D\uDCBB",
       activities: [
         { name: 'Adobe Animate', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Blender 3D Animation', frequency: 'Weekly', duration: '2 hours' },
@@ -793,7 +795,7 @@ export const activityDatabase = {
     },
     {
       category: 'Animation Projects',
-      icon: '🎬',
+      icon: "\uD83C\uDFAC",
       activities: [
         { name: 'Short Animation Projects', frequency: 'Monthly', duration: '4 hours' },
         { name: 'Animation Challenges', frequency: 'Weekly', duration: '2 hours' },
@@ -803,11 +805,11 @@ export const activityDatabase = {
     }
   ],
 
-  // PSYCHOLOGY & COUNSELING (NEW)
+  // PSYCHOLOGY & COUNSELING
   psychology: [
     {
       category: 'Psychology Learning',
-      icon: '🧠',
+      icon: "\uD83E\uDDE0",
       activities: [
         { name: 'Psychology Books for Teens', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Human Behavior Documentaries', frequency: 'Weekly', duration: '45 mins' },
@@ -817,7 +819,7 @@ export const activityDatabase = {
     },
     {
       category: 'Helping & Support',
-      icon: '💙',
+      icon: "\uD83D\uDC99",
       activities: [
         { name: 'Peer Counseling Training', frequency: 'Bi-weekly', duration: '2 hours' },
         { name: 'Active Listening Practice', frequency: 'Weekly', duration: '1 hour' },
@@ -827,7 +829,7 @@ export const activityDatabase = {
     },
     {
       category: 'Social Understanding',
-      icon: '🤝',
+      icon: "\uD83E\uDD1D",
       activities: [
         { name: 'Sociology Reading', frequency: 'Weekly', duration: '45 mins' },
         { name: 'Empathy Building Exercises', frequency: 'Weekly', duration: '30 mins' },
@@ -837,11 +839,11 @@ export const activityDatabase = {
     }
   ],
 
-  // LAW & JUSTICE (NEW)
+  // LAW & JUSTICE
   law: [
     {
       category: 'Legal Studies',
-      icon: '⚖️',
+      icon: "\u2696\uFE0F",
       activities: [
         { name: 'Mock Trial Team', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Law Books for Young Readers', frequency: 'Weekly', duration: '1 hour' },
@@ -851,7 +853,7 @@ export const activityDatabase = {
     },
     {
       category: 'Legal Skills',
-      icon: '📜',
+      icon: "\uD83D\uDCDC",
       activities: [
         { name: 'Debate Team', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Legal Research Practice', frequency: 'Weekly', duration: '1.5 hours' },
@@ -861,7 +863,7 @@ export const activityDatabase = {
     },
     {
       category: 'Legal Experience',
-      icon: '🏛️',
+      icon: "\uD83C\uDFDB\uFE0F",
       activities: [
         { name: 'Court Room Visits', frequency: 'Monthly', duration: '2 hours' },
         { name: 'Shadow a Lawyer', frequency: 'Quarterly', duration: '4 hours' },
@@ -871,11 +873,11 @@ export const activityDatabase = {
     }
   ],
 
-  // SOCIAL WORK & ACTIVISM (NEW)
+  // SOCIAL WORK & ACTIVISM
   activism: [
     {
       category: 'Community Service',
-      icon: '🤲',
+      icon: "\uD83E\uDD32",
       activities: [
         { name: 'Volunteer Projects', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Community Service Club', frequency: 'Weekly', duration: '1.5 hours' },
@@ -885,7 +887,7 @@ export const activityDatabase = {
     },
     {
       category: 'Advocacy & Awareness',
-      icon: '📢',
+      icon: "\uD83D\uDCE2",
       activities: [
         { name: 'Campaign Planning', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Social Media Advocacy', frequency: '3x/week', duration: '30 mins' },
@@ -895,7 +897,7 @@ export const activityDatabase = {
     },
     {
       category: 'Social Change',
-      icon: '✊',
+      icon: "\u270A",
       activities: [
         { name: 'Social Justice Reading', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Community Organizing', frequency: 'Bi-weekly', duration: '2 hours' },
@@ -905,11 +907,11 @@ export const activityDatabase = {
     }
   ],
 
-  // EMERGENCY SERVICES (NEW)
+  // EMERGENCY SERVICES
   emergencyServices: [
     {
       category: 'Emergency Skills',
-      icon: '🚒',
+      icon: "\uD83D\uDE92",
       activities: [
         { name: 'First Aid Certification', frequency: 'One-time', duration: '8 hours' },
         { name: 'CPR Training', frequency: 'Yearly', duration: '4 hours' },
@@ -919,7 +921,7 @@ export const activityDatabase = {
     },
     {
       category: 'Physical Fitness',
-      icon: '💪',
+      icon: "\uD83D\uDCAA",
       activities: [
         { name: 'Strength Training', frequency: '4x/week', duration: '1 hour' },
         { name: 'Cardio & Endurance', frequency: '5x/week', duration: '45 mins' },
@@ -929,7 +931,7 @@ export const activityDatabase = {
     },
     {
       category: 'Service & Experience',
-      icon: '🚑',
+      icon: "\uD83D\uDE91",
       activities: [
         { name: 'Fire Station Visits', frequency: 'Quarterly', duration: '2 hours' },
         { name: 'Junior Firefighter Program', frequency: 'Weekly', duration: '2 hours' },
@@ -939,11 +941,11 @@ export const activityDatabase = {
     }
   ],
 
-  // ARCHITECTURE & DESIGN (NEW)
+  // ARCHITECTURE & DESIGN
   architecture: [
     {
       category: 'Design Skills',
-      icon: '🏗️',
+      icon: "\uD83C\uDFD7\uFE0F",
       activities: [
         { name: 'Architectural Drawing', frequency: 'Weekly', duration: '2 hours' },
         { name: 'CAD Software Practice', frequency: '2x/week', duration: '1.5 hours' },
@@ -953,7 +955,7 @@ export const activityDatabase = {
     },
     {
       category: 'Architecture Study',
-      icon: '📐',
+      icon: "\uD83D\uDCD0",
       activities: [
         { name: 'Building Tours', frequency: 'Monthly', duration: '2 hours' },
         { name: 'Architecture Documentaries', frequency: 'Weekly', duration: '45 mins' },
@@ -963,7 +965,7 @@ export const activityDatabase = {
     },
     {
       category: 'Creative Projects',
-      icon: '🌆',
+      icon: "\uD83C\uDF06",
       activities: [
         { name: 'City Planning Games', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'LEGO Architecture Sets', frequency: 'Weekly', duration: '1 hour' },
@@ -973,11 +975,11 @@ export const activityDatabase = {
     }
   ],
 
-  // CARPENTRY & WOODWORKING (NEW)
+  // CARPENTRY & WOODWORKING
   carpentry: [
     {
       category: 'Woodworking Skills',
-      icon: '🪚',
+      icon: "\uD83E\uDE9A",
       activities: [
         { name: 'Woodworking Classes', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Hand Tool Practice', frequency: '2x/week', duration: '1 hour' },
@@ -987,7 +989,7 @@ export const activityDatabase = {
     },
     {
       category: 'Building Projects',
-      icon: '🔨',
+      icon: "\uD83D\uDD28",
       activities: [
         { name: 'Furniture Building', frequency: 'Bi-weekly', duration: '3 hours' },
         { name: 'Birdhouse/Small Projects', frequency: 'Weekly', duration: '2 hours' },
@@ -997,7 +999,7 @@ export const activityDatabase = {
     },
     {
       category: 'Advanced Skills',
-      icon: '🪵',
+      icon: "\uD83E\uDEB5",
       activities: [
         { name: 'Joinery Techniques', frequency: 'Bi-weekly', duration: '2 hours' },
         { name: 'Wood Finishing', frequency: 'Monthly', duration: '2 hours' },
@@ -1007,11 +1009,11 @@ export const activityDatabase = {
     }
   ],
 
-  // MECHANICS & AUTO TECH (NEW)
+  // MECHANICS & AUTO TECH
   mechanics: [
     {
       category: 'Automotive Basics',
-      icon: '🔧',
+      icon: "\uD83D\uDD27",
       activities: [
         { name: 'Auto Mechanics Classes', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Car Systems Study', frequency: 'Weekly', duration: '1 hour' },
@@ -1021,7 +1023,7 @@ export const activityDatabase = {
     },
     {
       category: 'Hands-On Practice',
-      icon: '🚗',
+      icon: "\uD83D\uDE97",
       activities: [
         { name: 'Oil Change Practice', frequency: 'Monthly', duration: '1.5 hours' },
         { name: 'Tire Changing', frequency: 'Monthly', duration: '1 hour' },
@@ -1031,7 +1033,7 @@ export const activityDatabase = {
     },
     {
       category: 'Advanced Auto Tech',
-      icon: '⚙️',
+      icon: "\u2699\uFE0F",
       activities: [
         { name: 'Electronics & Sensors', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Engine Rebuilding', frequency: 'Monthly', duration: '4 hours' },
@@ -1041,11 +1043,11 @@ export const activityDatabase = {
     }
   ],
 
-  // PUBLIC SPEAKING & DEBATE (NEW)
+  // PUBLIC SPEAKING & DEBATE
   publicSpeaking: [
     {
       category: 'Speaking Skills',
-      icon: '🎤',
+      icon: "\uD83C\uDFA4",
       activities: [
         { name: 'Toastmasters Youth', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'Speech Writing', frequency: 'Weekly', duration: '1 hour' },
@@ -1055,7 +1057,7 @@ export const activityDatabase = {
     },
     {
       category: 'Debate & Argumentation',
-      icon: '⚖️',
+      icon: "\u2696\uFE0F",
       activities: [
         { name: 'Debate Club', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Mock Debates', frequency: 'Weekly', duration: '1.5 hours' },
@@ -1065,7 +1067,7 @@ export const activityDatabase = {
     },
     {
       category: 'Performance',
-      icon: '🏆',
+      icon: "\uD83C\uDFC6",
       activities: [
         { name: 'Model UN', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Storytelling Workshop', frequency: 'Bi-weekly', duration: '1.5 hours' },
@@ -1075,11 +1077,11 @@ export const activityDatabase = {
     }
   ],
 
-  // JOURNALISM & MEDIA (NEW)
+  // JOURNALISM & MEDIA
   journalism: [
     {
       category: 'Writing Skills',
-      icon: '📰',
+      icon: "\uD83D\uDCF0",
       activities: [
         { name: 'Journalism Classes', frequency: 'Weekly', duration: '1.5 hours' },
         { name: 'News Writing Practice', frequency: '3x/week', duration: '1 hour' },
@@ -1089,7 +1091,7 @@ export const activityDatabase = {
     },
     {
       category: 'Reporting & Investigation',
-      icon: '🔍',
+      icon: "\uD83D\uDD0D",
       activities: [
         { name: 'School Newspaper', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Investigative Projects', frequency: 'Bi-weekly', duration: '2 hours' },
@@ -1099,7 +1101,7 @@ export const activityDatabase = {
     },
     {
       category: 'Multimedia Journalism',
-      icon: '📹',
+      icon: "\uD83D\uDCF9",
       activities: [
         { name: 'Video Journalism', frequency: 'Weekly', duration: '2 hours' },
         { name: 'Podcast Production', frequency: 'Weekly', duration: '1.5 hours' },
@@ -1113,7 +1115,7 @@ export const activityDatabase = {
   enrichment: [
     {
       category: 'Learning & Growth',
-      icon: '🌟',
+      icon: "\uD83C\uDF1F",
       activities: [
         { name: 'Library Visits', frequency: 'Weekly', duration: '1 hour' },
         { name: 'Educational Documentaries', frequency: 'Weekly', duration: '45 mins' },
@@ -1123,7 +1125,7 @@ export const activityDatabase = {
     },
     {
       category: 'Skills & Hobbies',
-      icon: '🎯',
+      icon: "\uD83C\uDFAF",
       activities: [
         { name: 'Try New Hobbies', frequency: 'Monthly', duration: '2 hours' },
         { name: 'Board Games & Puzzles', frequency: 'Weekly', duration: '1 hour' },
@@ -1132,7 +1134,7 @@ export const activityDatabase = {
     },
     {
       category: 'Social Development',
-      icon: '👥',
+      icon: "\uD83D\uDC65",
       activities: [
         { name: 'Community Service', frequency: 'Bi-weekly', duration: '2 hours' },
         { name: 'Group Activities', frequency: 'Weekly', duration: '1.5 hours' },
@@ -1143,7 +1145,7 @@ export const activityDatabase = {
 };
 
 // ============================================
-// MATCHING PATTERNS - 35 Priorities
+// MATCHING PATTERNS - 35 Categories
 // Priority ordering prevents conflicts
 // ============================================
 
@@ -1172,15 +1174,15 @@ const matchingPatterns = {
     negativeKeywords: ['veterinarian', 'vet', 'animal']
   },
 
-  // PRIORITY 4: Veterinary & Animal Care (separate from medical)
+  // PRIORITY 4: Veterinary & Animal Care
   veterinary: {
     priority: 4,
-    exact: ['become a vet', 'become a veterinarian', 'become a zookeeper', 'work with animals'],
-    contains: ['veterinarian', 'vet', 'animal care', 'zookeeper', 'zoo', 'animal shelter', 'pet care', 'animal behavior'],
+    exact: ['become a vet', 'become a veterinarian', 'become a zookeeper', 'work with animals', 'help animals'],
+    contains: ['veterinarian', 'vet', 'animal care', 'zookeeper', 'zoo', 'animal shelter', 'pet care', 'animal behavior', 'help animals', 'save animals', 'animal rescue', 'animal welfare', 'animals'],
     negativeKeywords: []
   },
 
-  // PRIORITY 5: Engineering (after programming distinction)
+  // PRIORITY 5: Engineering
   engineering: {
     priority: 5,
     exact: ['become an engineer'],
@@ -1192,8 +1194,8 @@ const matchingPatterns = {
   astronomy: {
     priority: 6,
     exact: ['become an astronaut', 'study astronomy', 'become an astrophysicist', 'space scientist'],
-    contains: ['astronomy', 'astronaut', 'astrophysics', 'space', 'planet', 'star', 'telescope', 'cosmos', 'nasa', 'rocket'],
-    negativeKeywords: []
+    contains: ['astronomy', 'astronaut', 'astrophysics', 'space exploration', 'telescope', 'cosmos', 'nasa', 'rocket', 'galaxy', 'universe', 'constellation', 'celestial', 'solar system'],
+    negativeKeywords: ['youtube', 'video', 'channel', 'film', 'environment', 'planet earth', 'save', 'protect', 'help']
   },
 
   // PRIORITY 7: Marine Biology
@@ -1223,8 +1225,8 @@ const matchingPatterns = {
   // PRIORITY 10: Music
   music: {
     priority: 10,
-    exact: ['learn guitar', 'learn piano', 'master guitar', 'play guitar', 'become a musician'],
-    contains: ['music', 'musician', 'sing', 'singer', 'band', 'orchestra', 'compose', 'guitar', 'piano', 'drum', 'violin', 'instrument'],
+    exact: ['learn guitar', 'learn piano', 'master guitar', 'play guitar', 'become a musician', 'learn an instrument', 'become a rapper', 'become a singer'],
+    contains: ['music', 'musician', 'sing', 'singer', 'singing', 'band', 'orchestra', 'compose', 'guitar', 'piano', 'drum', 'drums', 'drummer', 'violin', 'instrument', 'trumpet', 'saxophone', 'clarinet', 'flute', 'cello', 'bass', 'ukulele', 'harmonica', 'trombone', 'oboe', 'harp', 'choir', 'vocal', 'rapper', 'rap', 'hip hop', 'beatbox'],
     negativeKeywords: []
   },
 
@@ -1239,8 +1241,8 @@ const matchingPatterns = {
   // PRIORITY 12: Film & Movie Making
   filmmaking: {
     priority: 12,
-    exact: ['become a filmmaker', 'learn filmmaking', 'become a director', 'movie director'],
-    contains: ['filmmaker', 'director', 'cinematography', 'video production', 'film', 'movie', 'video editing', 'youtube', 'videography', 'premiere'],
+    exact: ['become a filmmaker', 'learn filmmaking', 'become a director', 'movie director', 'start a youtube channel', 'create youtube videos'],
+    contains: ['filmmaker', 'director', 'cinematography', 'video production', 'film', 'movie', 'video editing', 'youtube', 'youtube channel', 'content creator', 'videography', 'premiere', 'vlog', 'vlogger'],
     negativeKeywords: []
   },
 
@@ -1260,20 +1262,20 @@ const matchingPatterns = {
     negativeKeywords: []
   },
 
-  // PRIORITY 15: Visual Arts (after photography/animation/fashion)
+  // PRIORITY 15: Visual Arts
   visualArts: {
     priority: 15,
-    exact: ['become an artist', 'learn art', 'learn drawing', 'learn painting'],
-    contains: ['artist', 'painting', 'drawing', 'illustrat', 'graphic design', 'sketch', 'sculpt', 'visual art'],
+    exact: ['become an artist', 'learn art', 'learn drawing', 'learn painting', 'learn to draw', 'learn to paint'],
+    contains: ['artist', 'painting', 'drawing', 'draw', 'illustrat', 'graphic design', 'sketch', 'sculpt', 'visual art', 'fine art', 'art class'],
     negativeKeywords: ['martial', 'perform', 'culinary', 'fashion', 'photo', 'animation']
   },
 
   // PRIORITY 16: Performing Arts
   performingArts: {
     priority: 16,
-    exact: ['become an actor', 'become an actress', 'join theater', 'learn acting'],
-    contains: ['actor', 'actress', 'theater', 'theatre', 'drama', 'stage', 'broadway', 'improv', 'performance'],
-    negativeKeywords: ['martial', 'film', 'video']
+    exact: ['become an actor', 'become an actress', 'join theater', 'learn acting', 'become a dancer', 'learn dance', 'learn dancing'],
+    contains: ['actor', 'actress', 'theater', 'theatre', 'drama', 'stage', 'broadway', 'improv', 'performance', 'dance', 'dancer', 'dancing', 'ballet', 'choreography'],
+    negativeKeywords: ['martial', 'film', 'video', 'leadership', 'business', 'manage']
   },
 
   // PRIORITY 17: Gaming & Esports
@@ -1284,11 +1286,11 @@ const matchingPatterns = {
     negativeKeywords: []
   },
 
-  // PRIORITY 18: Sports (after gaming distinction)
+  // PRIORITY 18: Sports
   sports: {
     priority: 18,
     exact: ['join soccer team', 'join basketball team', 'become an athlete', 'play sports'],
-    contains: ['sport', 'athlete', 'soccer', 'football', 'basketball', 'tennis', 'swim', 'swimming', 'baseball', 'hockey', 'volleyball', 'gymnastics'],
+    contains: ['sport', 'athlete', 'soccer', 'football', 'basketball', 'tennis', 'swim', 'swimming', 'baseball', 'hockey', 'volleyball', 'gymnastics', 'badminton', 'cricket', 'rugby', 'lacrosse', 'track', 'field', 'running', 'golf', 'skiing', 'snowboard', 'skateboard', 'surfing', 'wrestling', 'boxing', 'fencing'],
     negativeKeywords: ['martial', 'esport', 'gaming']
   },
 
@@ -1335,8 +1337,8 @@ const matchingPatterns = {
   // PRIORITY 24: Emergency Services
   emergencyServices: {
     priority: 24,
-    exact: ['become a firefighter', 'become a paramedic', 'emergency services'],
-    contains: ['firefighter', 'paramedic', 'emt', 'rescue', 'fire department', 'emergency response'],
+    exact: ['become a firefighter', 'become a paramedic', 'emergency services', 'learn first aid'],
+    contains: ['firefighter', 'paramedic', 'emt', 'rescue', 'fire department', 'emergency response', 'first aid', 'cpr', 'emergency medical'],
     negativeKeywords: []
   },
 
@@ -1351,32 +1353,32 @@ const matchingPatterns = {
   // PRIORITY 26: Public Speaking & Debate
   publicSpeaking: {
     priority: 26,
-    exact: ['learn public speaking', 'join debate team', 'become a debater'],
-    contains: ['public speaking', 'debate', 'speech', 'toastmasters', 'oratory', 'model un', 'argumentation'],
+    exact: ['learn public speaking', 'join debate team', 'become a debater', 'improve public speaking', 'get better at public speaking'],
+    contains: ['public speaking', 'debate', 'speech', 'speaking skills', 'toastmasters', 'oratory', 'model un', 'argumentation'],
     negativeKeywords: []
   },
 
   // PRIORITY 27: Journalism & Media
   journalism: {
     priority: 27,
-    exact: ['become a journalist', 'become a reporter', 'news anchor'],
-    contains: ['journalist', 'journalism', 'reporter', 'news', 'media', 'newspaper', 'broadcast'],
+    exact: ['become a journalist', 'become a reporter', 'news anchor', 'start a podcast'],
+    contains: ['journalist', 'journalism', 'reporter', 'news', 'media', 'newspaper', 'broadcast', 'podcast', 'podcasting', 'podcaster'],
     negativeKeywords: []
   },
 
   // PRIORITY 28: Writing & Literature
   writing: {
     priority: 28,
-    exact: ['become a writer', 'become an author', 'learn writing'],
-    contains: ['writer', 'writing', 'author', 'novelist', 'journal', 'poet', 'poetry', 'story', 'book', 'blog', 'editor', 'publish'],
+    exact: ['become a writer', 'become an author', 'learn writing', 'improve my writing', 'get better at writing', 'improve writing skills'],
+    contains: ['writer', 'writing', 'author', 'novelist', 'journal', 'poet', 'poetry', 'story', 'book', 'blog', 'editor', 'publish', 'creative writing', 'write better'],
     negativeKeywords: []
   },
 
   // PRIORITY 29: Business & Entrepreneurship
   business: {
     priority: 29,
-    exact: ['start a business', 'become an entrepreneur', 'save money', 'learn about business'],
-    contains: ['business', 'entrepreneur', 'ceo', 'manage', 'leader', 'startup', 'invest', 'marketing', 'sales', 'finance', 'money'],
+    exact: ['start a business', 'become an entrepreneur', 'save money', 'learn about business', 'improve leadership', 'develop leadership'],
+    contains: ['business', 'entrepreneur', 'ceo', 'manage', 'management', 'leader', 'leadership', 'startup', 'invest', 'marketing', 'sales', 'finance', 'money'],
     negativeKeywords: []
   },
 
@@ -1399,8 +1401,8 @@ const matchingPatterns = {
   // PRIORITY 32: Environmental Science
   environmental: {
     priority: 32,
-    exact: ['protect environment', 'save planet', 'study environment'],
-    contains: ['environment', 'ecology', 'conservation', 'sustainability', 'climate', 'nature', 'wildlife', 'green', 'eco'],
+    exact: ['protect environment', 'save planet', 'study environment', 'save the environment', 'protect the planet', 'help the earth', 'help the planet', 'save the earth'],
+    contains: ['environment', 'ecology', 'conservation', 'sustainability', 'climate', 'nature', 'wildlife', 'green', 'eco', 'save planet', 'protect earth', 'recycle', 'recycling', 'earth day', 'planet health'],
     negativeKeywords: ['astronomy', 'space', 'marine', 'ocean']
   },
 
@@ -1414,7 +1416,64 @@ const matchingPatterns = {
 };
 
 // ============================================
-// MATCHING FUNCTIONS
+// SMARTER MATCHING: word/prefix matching + person-word synonyms
+// ============================================
+
+// Extra keywords merged into the patterns above (person words, variants).
+const EXTRA_KEYWORDS = {
+  sports: ['gymnast', 'swimmer', 'runner', 'sprinter', 'marathon', 'triathlon', 'cyclist', 'cycling', 'biking', 'bike', 'bicycle', 'climber', 'climbing', 'bouldering', 'skater', 'skating', 'skier', 'surfer', 'golfer', 'footballer', 'rower', 'rowing', 'archery', 'archer', 'equestrian', 'horse', 'diver', 'diving', 'cheerleader', 'cheerleading', 'softball', 'pickleball', 'parkour', 'olympic', 'olympian'],
+  performingArts: ['ballerina', 'ballet', 'dancer', 'dance', 'dancing', 'actor', 'actress', 'acting', 'theater', 'theatre', 'circus', 'magician', 'magic', 'comedian', 'musical theatre'],
+  music: ['pianist', 'violinist', 'guitarist', 'drummer', 'singer', 'cellist', 'flutist', 'trumpeter', 'saxophonist', 'composer', 'musician', 'conductor', 'songwriter', 'dj'],
+  visualArts: ['painter', 'sculptor', 'illustrator', 'cartoonist', 'potter', 'drawing', 'sketching', 'artist'],
+  culinary: ['baker', 'baking', 'pastry', 'barista', 'cake'],
+  astronomy: ['astronaut', 'astrophysicist', 'rocket', 'space', 'nasa'],
+  engineering: ['pilot', 'aviation', 'aerospace', 'aircraft', 'robotics', 'roboticist', 'scientist', 'chemist', 'physicist', 'researcher'],
+  environmental: ['biologist', 'geologist', 'botanist', 'ecologist', 'conservationist', 'gardener', 'farmer', 'forester'],
+  veterinary: ['zookeeper', 'zoologist'],
+  mathematics: ['chess', 'puzzle', 'mathematician', 'statistician'],
+  teaching: ['professor', 'tutor', 'educator'],
+  writing: ['novelist', 'poet', 'author', 'blogger', 'screenwriter'],
+  business: ['founder', 'investor', 'accountant', 'banker', 'entrepreneur'],
+  photography: ['photographer'],
+  filmmaking: ['videographer', 'vlogger', 'youtuber', 'director'],
+  animation: ['animator', 'cartoon'],
+  law: ['attorney', 'judge', 'paralegal'],
+  psychology: ['psychiatrist'],
+  activism: ['volunteer', 'charity', 'humanitarian'],
+  emergencyServices: ['firefighter', 'police', 'detective'],
+  architecture: ['architect', 'interior design'],
+  carpentry: ['carpenter', 'woodworking', 'plumber', 'electrician'],
+  mechanics: ['mechanic', 'automotive'],
+  publicSpeaking: ['debate', 'orator', 'politician'],
+  journalism: ['reporter', 'journalist', 'news anchor'],
+  marineBiology: ['oceanographer', 'scuba'],
+};
+
+for (const [cat, words] of Object.entries(EXTRA_KEYWORDS)) {
+  if (matchingPatterns[cat]) {
+    matchingPatterns[cat].contains = Array.from(new Set([...matchingPatterns[cat].contains, ...words]));
+  }
+}
+
+function wordsOf(text) {
+  return text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+}
+
+// Does this keyword match the goal? Multi-word or long keywords match as
+// substrings; short single words match whole words or by 4+ letter prefix.
+function keywordMatches(goalLower, goalWords, keyword) {
+  const k = keyword.toLowerCase();
+  if (k.includes(' ') || k.includes('-')) return goalLower.includes(k);
+  if (k.length >= 6 && goalLower.includes(k)) return true;
+  return goalWords.some((w) => {
+    if (w === k) return true;
+    if (w.length >= 4 && k.length >= 4) return w.startsWith(k) || k.startsWith(w);
+    return false;
+  });
+}
+
+// ============================================
+// MATCHING FUNCTIONS WITH SAFETY CHECKS
 // ============================================
 
 function calculateMatchScore(goal, pattern) {
@@ -1437,8 +1496,9 @@ function calculateMatchScore(goal, pattern) {
 
   // Check contains keywords
   let containsMatches = 0;
+  const goalWords = wordsOf(goalLower);
   for (const keyword of pattern.contains) {
-    if (goalLower.includes(keyword)) {
+    if (keywordMatches(goalLower, goalWords, keyword)) {
       containsMatches++;
       score += 10;
     }
@@ -1449,75 +1509,89 @@ function calculateMatchScore(goal, pattern) {
     score += 20;
   }
 
-  // Priority bonus (higher priority = more specific = bigger bonus)
-  score += (36 - pattern.priority) * 2;
+  // Priority bonus ONLY if there's an actual match
+  // This prevents categories from getting points just for having high priority
+  if (score > 0) {
+    score += (36 - pattern.priority) * 2;
+  }
 
   return Math.min(score, 100);
 }
 
-export const getActivityPlan = (goalText) => {
-  if (!goalText || typeof goalText !== 'string') {
-    return activityDatabase.enrichment;
-  }
+// ============================================
+// GOAL CLASSIFICATION: category -> discipline -> plan
+// ============================================
 
-  const goal = goalText.toLowerCase().trim();
+export const CATEGORY_LABELS = {
+  medical: 'Medicine & Health', engineering: 'Engineering & Science', programming: 'Coding & Tech',
+  visualArts: 'Visual Arts', music: 'Music', performingArts: 'Dance, Theatre & Performance',
+  sports: 'Sports & Fitness', martialArts: 'Martial Arts', writing: 'Writing', business: 'Business',
+  culinary: 'Cooking & Baking', languages: 'Languages', environmental: 'Nature & Environment',
+  teaching: 'Teaching', astronomy: 'Space & Astronomy', veterinary: 'Animals & Vet',
+  marineBiology: 'Ocean & Marine Life', mathematics: 'Math & Puzzles', invention: 'Inventing & Making',
+  photography: 'Photography', fashion: 'Fashion', filmmaking: 'Film & Video', gaming: 'Gaming',
+  animation: 'Animation', psychology: 'Psychology', law: 'Law', activism: 'Community & Activism',
+  emergencyServices: 'Emergency Services', architecture: 'Architecture', carpentry: 'Building & Woodwork',
+  mechanics: 'Mechanics', publicSpeaking: 'Public Speaking & Debate', journalism: 'Journalism',
+  enrichment: 'General Enrichment',
+};
 
-  if (goal.length < 3) {
-    return activityDatabase.enrichment;
-  }
-
+function bestCategory(goalLower) {
   const scores = [];
-
   for (const [categoryName, pattern] of Object.entries(matchingPatterns)) {
-    const score = calculateMatchScore(goal, pattern);
-    if (score > 0) {
-      scores.push({
-        category: categoryName,
-        score: score,
-        priority: pattern.priority
-      });
+    const score = calculateMatchScore(goalLower, pattern);
+    if (score > 0) scores.push({ category: categoryName, score, priority: pattern.priority });
+  }
+  scores.sort((a, b) => (b.score !== a.score ? b.score - a.score : a.priority - b.priority));
+  return scores.length > 0 && scores[0].score >= 20 ? scores[0].category : null;
+}
+
+function findDiscipline(goalLower) {
+  const goalWords = wordsOf(goalLower);
+  let found = null;
+  for (const [key, d] of Object.entries(DISCIPLINES)) {
+    if ((d.negativeKeywords || []).some((n) => goalLower.includes(n))) continue;
+    if (d.keywords.some((k) => keywordMatches(goalLower, goalWords, k))) {
+      found = found || key;
     }
   }
+  return found;
+}
 
-  // Sort by score (descending), then by priority (ascending)
-  scores.sort((a, b) => {
-    if (b.score !== a.score) {
-      return b.score - a.score;
-    }
-    return a.priority - b.priority;
-  });
+export const getPlanForCategory = (category) => {
+  const plan = activityDatabase[category];
+  return Array.isArray(plan) && plan.length > 0 ? plan : activityDatabase.enrichment || [];
+};
 
-  // Return best match if score >= 20
-  if (scores.length > 0 && scores[0].score >= 20) {
-    const bestMatch = scores[0].category;
-    return activityDatabase[bestMatch] || activityDatabase.enrichment;
+// Returns { category, discipline, confidence: 'high' | 'none', plan }.
+// confidence 'none' means we could not tell what the goal is about; callers
+// should ask the user instead of showing a generic plan.
+export const getGoalMatch = (goalText) => {
+  if (!goalText || typeof goalText !== 'string' || goalText.trim().length < 3) {
+    return { category: null, discipline: null, confidence: 'none', plan: [] };
   }
+  const goalLower = goalText.toLowerCase().trim();
+  const category = bestCategory(goalLower);
+  const discipline = findDiscipline(goalLower);
 
-  // Fallback to enrichment
-  return activityDatabase.enrichment;
+  if (discipline && (!category || DISCIPLINES[discipline].category === category)) {
+    return { category: DISCIPLINES[discipline].category, discipline, confidence: 'high', plan: DISCIPLINES[discipline].plan };
+  }
+  if (category) {
+    return { category, discipline: null, confidence: 'high', plan: getPlanForCategory(category) };
+  }
+  return { category: null, discipline: null, confidence: 'none', plan: [] };
+};
+
+// Backwards-compatible API (generic enrichment when nothing matches).
+export const getActivityPlan = (goalText) => {
+  const m = getGoalMatch(goalText);
+  return m.confidence === 'none' ? activityDatabase.enrichment || [] : m.plan;
 };
 
 export const getCategoryName = (goalText) => {
-  const goal = goalText.toLowerCase().trim();
-  
-  const scores = [];
-  for (const [categoryName, pattern] of Object.entries(matchingPatterns)) {
-    const score = calculateMatchScore(goal, pattern);
-    if (score > 0) {
-      scores.push({ category: categoryName, score: score, priority: pattern.priority });
-    }
-  }
-
-  scores.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return a.priority - b.priority;
-  });
-
-  if (scores.length > 0 && scores[0].score >= 20) {
-    return scores[0].category;
-  }
-
-  return 'enrichment';
+  const m = getGoalMatch(goalText);
+  return m.category || 'enrichment';
 };
 
 export const debugMatching = (goalText) => {

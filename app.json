@@ -33,7 +33,13 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single",
+      "name": "Pathie",
+      "shortName": "Pathie",
+      "description": "Fun activities for every dream - plan and schedule activities aligned with your child's goals.",
+      "themeColor": "#9333EA"
     }
   }
 }

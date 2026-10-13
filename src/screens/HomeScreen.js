@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { auth, db } from '../../firebase';
+import { showAlert } from '../utils/crossAlert';
 
 export default function HomeScreen({ navigation }) {
   const [children, setChildren] = useState([]);
@@ -28,7 +29,7 @@ export default function HomeScreen({ navigation }) {
     try {
       await auth.signOut();
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
@@ -46,7 +47,7 @@ export default function HomeScreen({ navigation }) {
         createdAt: new Date()
       });
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 

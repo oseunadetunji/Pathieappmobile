@@ -1,8 +1,10 @@
-// Using Firebase v9 compat mode for React Native compatibility
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
-import 'firebase/compat/storage';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { Platform } from 'react-native';
+import { initializeAuth, getAuth, getReactNativePersistence } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDE1-GkUbENUYE8OekVkP7QQzpRs0mbFcs",
@@ -14,13 +16,17 @@ const firebaseConfig = {
   measurementId: "G-zFGJ02M6YH"
 };
 
-// Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+// Web uses default persistence; native needs AsyncStorage-backed persistence
+const auth = Platform.OS === 'web'
+  ? getAuth(app)
+  : initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
 
-export { auth, db, storage };
+const db = getFirestore(app);
+const storage = getStorage(app);
+const functions = getFunctions(app, 'us-central1');
+
+export { auth, db, storage, functions };

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { auth, db } from '../../firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { showAlert } from '../utils/crossAlert';
 
 export default function FeedbackScreen({ navigation }) {
   const [rating, setRating] = useState(0);
@@ -17,12 +19,12 @@ export default function FeedbackScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      Alert.alert('Rating Required', 'Please select a rating before submitting');
+      showAlert('Rating Required', 'Please select a rating before submitting');
       return;
     }
 
     if (!feedback.trim()) {
-      Alert.alert('Feedback Required', 'Please enter your feedback');
+      showAlert('Feedback Required', 'Please enter your feedback');
       return;
     }
 
@@ -32,7 +34,7 @@ export default function FeedbackScreen({ navigation }) {
       const userId = auth.currentUser?.uid;
       const userEmail = auth.currentUser?.email;
 
-      await db.collection('feedback').add({
+      await addDoc(collection(db, 'feedback'), {
         userId,
         userEmail,
         rating,
@@ -41,7 +43,7 @@ export default function FeedbackScreen({ navigation }) {
         createdAt: new Date()
       });
 
-      Alert.alert(
+      showAlert(
         'Thank You! 🎉',
         'Your feedback has been submitted. We appreciate you helping us improve Pathie!',
         [
@@ -54,7 +56,7 @@ export default function FeedbackScreen({ navigation }) {
       setCategory('general');
       setFeedback('');
     } catch (error) {
-      Alert.alert('Error', 'Failed to submit feedback: ' + error.message);
+      showAlert('Error', 'Failed to submit feedback: ' + error.message);
     } finally {
       setSubmitting(false);
     }

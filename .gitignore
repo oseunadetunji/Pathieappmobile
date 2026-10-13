@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local backups
+_backups_*/
+src/config.local.js
+functions/node_modules/
+.firebase/

@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function ownsDoc() { return signedIn() && resource.data.userId == request.auth.uid; }
+    function createsOwnDoc() { return signedIn() && request.resource.data.userId == request.auth.uid; }
+    // updates may not reassign a document to another user
+    function keepsOwner() { return request.resource.data.userId == resource.data.userId; }
+
+    // Paid status comes from subscriptions/{uid}, which only the Stripe webhook can write.
+    function isPaid() {
+      return exists(/databases/$(database)/documents/subscriptions/$(request.auth.uid))
+        && get(/databases/$(database)/documents/subscriptions/$(request.auth.uid)).data.tier == 'family'
+        && get(/databases/$(database)/documents/subscriptions/$(request.auth.uid)).data.status in ['active', 'trialing', 'past_due'];
+    }
+    // Free accounts: at most 2 goals per child (existing over-limit children may still be edited, not grown)
+    function goalsWithinLimit() {
+      return !('goals' in request.resource.data)
+        || request.resource.data.goals.size() <= 2
+        || isPaid();
+    }
+
+    match /children/{id} {
+      allow create: if createsOwnDoc() && goalsWithinLimit();
+      allow read, delete: if ownsDoc();
+      allow update: if ownsDoc() && keepsOwner()
+        && (goalsWithinLimit() || request.resource.data.goals.size() <= resource.data.goals.size());
+    }
+    match /activities/{id} {
+      allow create: if createsOwnDoc();
+      allow read, delete: if ownsDoc();
+      allow update: if ownsDoc() && keepsOwner();
+    }
+    match /customActivities/{id} {
+      allow create: if createsOwnDoc();
+      allow read, delete: if ownsDoc();
+      allow update: if ownsDoc() && keepsOwner();
+    }
+
+    // Feedback and unmatched goals: users can add and (for feedback) remove their own
+    match /feedback/{id} {
+      allow create: if createsOwnDoc();
+      allow read, delete: if ownsDoc();
+    }
+    match /unmatchedGoals/{id} {
+      allow create: if createsOwnDoc();
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+    // Read-only for the owner: counters must never be user-editable.
+    match /usage/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Subscriptions are written ONLY by the Stripe webhook (Admin SDK bypasses rules)
+    match /subscriptions/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

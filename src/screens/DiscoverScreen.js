@@ -1,273 +1,104 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { activityDatabase } from '../data/activityDatabase';
+import { showAlert } from '../utils/crossAlert';
 
 export default function DiscoverScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const categories = [
-    { id: 'all', name: 'All', icon: '🌟', color: '#9333EA' },
-    { id: 'stem', name: 'STEM', icon: '🔬', color: '#3B82F6' },
-    { id: 'arts', name: 'Arts', icon: '🎨', color: '#EC4899' },
-    { id: 'music', name: 'Music', icon: '🎵', color: '#8B5CF6' },
-    { id: 'sports', name: 'Sports', icon: '⚽', color: '#10B981' },
-    { id: 'business', name: 'Business', icon: '💼', color: '#F59E0B' },
-    { id: 'languages', name: 'Languages', icon: '🌍', color: '#06B6D4' },
-    { id: 'life', name: 'Life Skills', icon: '🛠️', color: '#84CC16' },
+    { id: 'all', name: 'All', icon: "\uD83C\uDF1F", color: '#9333EA' },
+    { id: 'stem', name: 'STEM', icon: "\uD83D\uDD2C", color: '#3B82F6' },
+    { id: 'arts', name: 'Arts', icon: "\uD83C\uDFA8", color: '#EC4899' },
+    { id: 'music', name: 'Music', icon: "\uD83C\uDFB5", color: '#8B5CF6' },
+    { id: 'sports', name: 'Sports', icon: "\u26BD", color: '#10B981' },
+    { id: 'business', name: 'Business', icon: "\uD83D\uDCBC", color: '#F59E0B' },
   ];
 
   const allGoals = {
     all: [
-      // STEM (15 goals)
-      { name: 'Become a Doctor', key: 'medical', icon: '⚕️', category: 'stem' },
-      { name: 'Become an Engineer', key: 'engineering', icon: '⚙️', category: 'stem' },
-      { name: 'Learn to Code', key: 'programming', icon: '💻', category: 'stem' },
-      { name: 'Be a Scientist', key: 'environmental', icon: '🔬', category: 'stem' },
-      { name: 'Study Marine Biology', key: 'environmental', icon: '🐋', category: 'stem' },
-      { name: 'Become a Veterinarian', key: 'medical', icon: '🐾', category: 'stem' },
-      { name: 'Study Astronomy', key: 'environmental', icon: '🔭', category: 'stem' },
-      { name: 'Become a Dentist', key: 'medical', icon: '🦷', category: 'stem' },
-      { name: 'Game Developer', key: 'programming', icon: '🎮', category: 'stem' },
-      { name: 'Web Developer', key: 'programming', icon: '🌐', category: 'stem' },
-      { name: 'Robotics Engineer', key: 'engineering', icon: '🤖', category: 'stem' },
-      { name: 'Environmental Scientist', key: 'environmental', icon: '🌱', category: 'stem' },
-      { name: 'Architect', key: 'engineering', icon: '🏛️', category: 'stem' },
-      { name: 'Data Scientist', key: 'programming', icon: '📊', category: 'stem' },
-      { name: 'Nurse', key: 'medical', icon: '👩‍⚕️', category: 'stem' },
-      
-      // Arts (12 goals)
-      { name: 'Become an Artist', key: 'visualArts', icon: '🎨', category: 'arts' },
-      { name: 'Be an Actor', key: 'performingArts', icon: '🎭', category: 'arts' },
-      { name: 'Professional Dancer', key: 'performingArts', icon: '💃', category: 'arts' },
-      { name: 'Fashion Designer', key: 'visualArts', icon: '👗', category: 'arts' },
-      { name: 'Photographer', key: 'visualArts', icon: '📸', category: 'arts' },
-      { name: 'Animator', key: 'visualArts', icon: '🎬', category: 'arts' },
-      { name: 'Graphic Designer', key: 'visualArts', icon: '🖌️', category: 'arts' },
-      { name: 'Filmmaker', key: 'performingArts', icon: '🎥', category: 'arts' },
-      { name: 'Voice Actor', key: 'performingArts', icon: '🎙️', category: 'arts' },
-      { name: 'Illustrator', key: 'visualArts', icon: '✏️', category: 'arts' },
-      { name: 'Stage Director', key: 'performingArts', icon: '🎪', category: 'arts' },
-      { name: 'Sculptor', key: 'visualArts', icon: '🗿', category: 'arts' },
-      
-      // Music (10 goals)
-      { name: 'Master Guitar', key: 'music', icon: '🎸', category: 'music' },
-      { name: 'Master Piano', key: 'music', icon: '🎹', category: 'music' },
-      { name: 'Become a Singer', key: 'music', icon: '🎤', category: 'music' },
-      { name: 'Music Producer', key: 'music', icon: '🎧', category: 'music' },
-      { name: 'Learn Violin', key: 'music', icon: '🎻', category: 'music' },
-      { name: 'Learn Drums', key: 'music', icon: '🥁', category: 'music' },
-      { name: 'Join Orchestra', key: 'music', icon: '🎺', category: 'music' },
-      { name: 'DJ/Electronic Music', key: 'music', icon: '🎛️', category: 'music' },
-      { name: 'Songwriter', key: 'music', icon: '✍️🎵', category: 'music' },
-      { name: 'Music Teacher', key: 'music', icon: '👨‍🏫🎵', category: 'music' },
-      
-      // Sports (15 goals)
-      { name: 'Join Soccer Team', key: 'sports', icon: '⚽', category: 'sports' },
-      { name: 'Professional Basketball', key: 'sports', icon: '🏀', category: 'sports' },
-      { name: 'Olympic Swimmer', key: 'sports', icon: '🏊', category: 'sports' },
-      { name: 'Martial Arts Master', key: 'martialArts', icon: '🥋', category: 'sports' },
-      { name: 'Tennis Player', key: 'sports', icon: '🎾', category: 'sports' },
-      { name: 'Baseball Player', key: 'sports', icon: '⚾', category: 'sports' },
-      { name: 'Gymnast', key: 'sports', icon: '🤸', category: 'sports' },
-      { name: 'Track & Field Athlete', key: 'sports', icon: '🏃', category: 'sports' },
-      { name: 'Figure Skater', key: 'sports', icon: '⛸️', category: 'sports' },
-      { name: 'Volleyball Player', key: 'sports', icon: '🏐', category: 'sports' },
-      { name: 'Hockey Player', key: 'sports', icon: '🏒', category: 'sports' },
-      { name: 'Golf Player', key: 'sports', icon: '⛳', category: 'sports' },
-      { name: 'Rock Climber', key: 'sports', icon: '🧗', category: 'sports' },
-      { name: 'Yoga Instructor', key: 'sports', icon: '🧘', category: 'sports' },
-      { name: 'Personal Trainer', key: 'sports', icon: '💪', category: 'sports' },
-      
-      // Business (10 goals)
-      { name: 'Start a Business', key: 'business', icon: '💼', category: 'business' },
-      { name: 'Save Money', key: 'business', icon: '💰', category: 'business' },
-      { name: 'Become an Entrepreneur', key: 'business', icon: '🚀', category: 'business' },
-      { name: 'Learn About Investing', key: 'business', icon: '📈', category: 'business' },
-      { name: 'Marketing Expert', key: 'business', icon: '📢', category: 'business' },
-      { name: 'CEO/Executive', key: 'business', icon: '👔', category: 'business' },
-      { name: 'Financial Advisor', key: 'business', icon: '💳', category: 'business' },
-      { name: 'Real Estate Agent', key: 'business', icon: '🏘️', category: 'business' },
-      { name: 'Accountant', key: 'business', icon: '🧮', category: 'business' },
-      { name: 'Sales Professional', key: 'business', icon: '🤝', category: 'business' },
-      
-      // Languages (8 goals)
-      { name: 'Learn Spanish', key: 'languages', icon: '🇪🇸', category: 'languages' },
-      { name: 'Learn French', key: 'languages', icon: '🇫🇷', category: 'languages' },
-      { name: 'Learn Mandarin', key: 'languages', icon: '🇨🇳', category: 'languages' },
-      { name: 'Learn Japanese', key: 'languages', icon: '🇯🇵', category: 'languages' },
-      { name: 'Learn German', key: 'languages', icon: '🇩🇪', category: 'languages' },
-      { name: 'Learn Arabic', key: 'languages', icon: '🇸🇦', category: 'languages' },
-      { name: 'Become Bilingual', key: 'languages', icon: '🌐', category: 'languages' },
-      { name: 'Translator/Interpreter', key: 'languages', icon: '🗣️', category: 'languages' },
-      
-      // Life Skills (10 goals)
-      { name: 'Learn to Cook', key: 'culinary', icon: '👨‍🍳', category: 'life' },
-      { name: 'Become a Chef', key: 'culinary', icon: '🍳', category: 'life' },
-      { name: 'Learn to Write', key: 'writing', icon: '✍️', category: 'life' },
-      { name: 'Become an Author', key: 'writing', icon: '📚', category: 'life' },
-      { name: 'Public Speaking', key: 'business', icon: '🎤', category: 'life' },
-      { name: 'Leadership Skills', key: 'business', icon: '👑', category: 'life' },
-      { name: 'Time Management', key: 'enrichment', icon: '⏰', category: 'life' },
-      { name: 'Critical Thinking', key: 'enrichment', icon: '🧠', category: 'life' },
-      { name: 'First Aid/Safety', key: 'medical', icon: '🚑', category: 'life' },
-      { name: 'Gardening', key: 'environmental', icon: '🌻', category: 'life' },
+      { name: 'Become a Doctor', key: 'medical', icon: "\u2695\uFE0F", category: 'stem' },
+      { name: 'Become an Engineer', key: 'engineering', icon: "\u2699\uFE0F", category: 'stem' },
+      { name: 'Master Guitar', key: 'music', icon: "\uD83C\uDFB8", category: 'music' },
+      { name: 'Master Piano', key: 'music', icon: "\uD83C\uDFB9", category: 'music' },
+      { name: 'Become an Artist', key: 'visualArts', icon: "\uD83C\uDFA8", category: 'arts' },
+      { name: 'Join Soccer Team', key: 'sports', icon: "\u26BD", category: 'sports' },
+      { name: 'Learn to Code', key: 'programming', icon: "\uD83D\uDCBB", category: 'stem' },
+      { name: 'Start a Business', key: 'business', icon: "\uD83D\uDCBC", category: 'business' },
     ],
-    
     stem: [
-      { name: 'Become a Doctor', key: 'medical', icon: '⚕️' },
-      { name: 'Become an Engineer', key: 'engineering', icon: '⚙️' },
-      { name: 'Learn to Code', key: 'programming', icon: '💻' },
-      { name: 'Be a Scientist', key: 'environmental', icon: '🔬' },
-      { name: 'Study Marine Biology', key: 'environmental', icon: '🐋' },
-      { name: 'Become a Veterinarian', key: 'medical', icon: '🐾' },
-      { name: 'Study Astronomy', key: 'environmental', icon: '🔭' },
-      { name: 'Become a Dentist', key: 'medical', icon: '🦷' },
-      { name: 'Game Developer', key: 'programming', icon: '🎮' },
-      { name: 'Web Developer', key: 'programming', icon: '🌐' },
-      { name: 'Robotics Engineer', key: 'engineering', icon: '🤖' },
-      { name: 'Environmental Scientist', key: 'environmental', icon: '🌱' },
-      { name: 'Architect', key: 'engineering', icon: '🏛️' },
-      { name: 'Data Scientist', key: 'programming', icon: '📊' },
-      { name: 'Nurse', key: 'medical', icon: '👩‍⚕️' },
-      { name: 'Pharmacist', key: 'medical', icon: '💊' },
-      { name: 'Physicist', key: 'environmental', icon: '⚛️' },
-      { name: 'Chemist', key: 'environmental', icon: '⚗️' },
+      { name: 'Become a Doctor', key: 'medical', icon: "\u2695\uFE0F" },
+      { name: 'Become an Engineer', key: 'engineering', icon: "\u2699\uFE0F" },
+      { name: 'Learn to Code', key: 'programming', icon: "\uD83D\uDCBB" },
+      { name: 'Be a Scientist', key: 'environmental', icon: "\uD83D\uDD2C" },
+      { name: 'Study Marine Biology', key: 'environmental', icon: "\uD83D\uDC0B" },
     ],
-    
     arts: [
-      { name: 'Become an Artist', key: 'visualArts', icon: '🎨' },
-      { name: 'Be an Actor', key: 'performingArts', icon: '🎭' },
-      { name: 'Professional Dancer', key: 'performingArts', icon: '💃' },
-      { name: 'Fashion Designer', key: 'visualArts', icon: '👗' },
-      { name: 'Photographer', key: 'visualArts', icon: '📸' },
-      { name: 'Animator', key: 'visualArts', icon: '🎬' },
-      { name: 'Graphic Designer', key: 'visualArts', icon: '🖌️' },
-      { name: 'Filmmaker', key: 'performingArts', icon: '🎥' },
-      { name: 'Voice Actor', key: 'performingArts', icon: '🎙️' },
-      { name: 'Illustrator', key: 'visualArts', icon: '✏️' },
-      { name: 'Stage Director', key: 'performingArts', icon: '🎪' },
-      { name: 'Sculptor', key: 'visualArts', icon: '🗿' },
-      { name: 'Interior Designer', key: 'visualArts', icon: '🛋️' },
-      { name: 'Makeup Artist', key: 'visualArts', icon: '💄' },
+      { name: 'Become an Artist', key: 'visualArts', icon: "\uD83C\uDFA8" },
+      { name: 'Be an Actor', key: 'performingArts', icon: "\uD83C\uDFAD" },
+      { name: 'Professional Dancer', key: 'performingArts', icon: "\uD83D\uDC83" },
+      { name: 'Fashion Designer', key: 'visualArts', icon: "\uD83D\uDC57" },
     ],
-    
     music: [
-      { name: 'Master Guitar', key: 'music', icon: '🎸' },
-      { name: 'Master Piano', key: 'music', icon: '🎹' },
-      { name: 'Become a Singer', key: 'music', icon: '🎤' },
-      { name: 'Music Producer', key: 'music', icon: '🎧' },
-      { name: 'Learn Violin', key: 'music', icon: '🎻' },
-      { name: 'Learn Drums', key: 'music', icon: '🥁' },
-      { name: 'Join Orchestra', key: 'music', icon: '🎺' },
-      { name: 'DJ/Electronic Music', key: 'music', icon: '🎛️' },
-      { name: 'Songwriter', key: 'music', icon: '✍️🎵' },
-      { name: 'Music Teacher', key: 'music', icon: '👨‍🏫🎵' },
-      { name: 'Conductor', key: 'music', icon: '🎼' },
-      { name: 'Sound Engineer', key: 'music', icon: '🔊' },
+      { name: 'Master Guitar', key: 'music', icon: "\uD83C\uDFB8" },
+      { name: 'Master Piano', key: 'music', icon: "\uD83C\uDFB9" },
+      { name: 'Become a Singer', key: 'music', icon: "\uD83C\uDFA4" },
+      { name: 'Music Producer', key: 'music', icon: "\uD83C\uDFA7" },
     ],
-    
     sports: [
-      { name: 'Join Soccer Team', key: 'sports', icon: '⚽' },
-      { name: 'Professional Basketball', key: 'sports', icon: '🏀' },
-      { name: 'Olympic Swimmer', key: 'sports', icon: '🏊' },
-      { name: 'Martial Arts Master', key: 'martialArts', icon: '🥋' },
-      { name: 'Tennis Player', key: 'sports', icon: '🎾' },
-      { name: 'Baseball Player', key: 'sports', icon: '⚾' },
-      { name: 'Gymnast', key: 'sports', icon: '🤸' },
-      { name: 'Track & Field Athlete', key: 'sports', icon: '🏃' },
-      { name: 'Figure Skater', key: 'sports', icon: '⛸️' },
-      { name: 'Volleyball Player', key: 'sports', icon: '🏐' },
-      { name: 'Hockey Player', key: 'sports', icon: '🏒' },
-      { name: 'Golf Player', key: 'sports', icon: '⛳' },
-      { name: 'Rock Climber', key: 'sports', icon: '🧗' },
-      { name: 'Yoga Instructor', key: 'sports', icon: '🧘' },
-      { name: 'Personal Trainer', key: 'sports', icon: '💪' },
-      { name: 'Cyclist', key: 'sports', icon: '🚴' },
-      { name: 'Equestrian', key: 'sports', icon: '🏇' },
+      { name: 'Join Soccer Team', key: 'sports', icon: "\u26BD" },
+      { name: 'Professional Basketball Player', key: 'sports', icon: "\uD83C\uDFC0" },
+      { name: 'Olympic Swimmer', key: 'sports', icon: "\uD83C\uDFCA" },
+      { name: 'Martial Arts Master', key: 'sports', icon: "\uD83E\uDD4B" },
     ],
-    
     business: [
-      { name: 'Start a Business', key: 'business', icon: '💼' },
-      { name: 'Save Money', key: 'business', icon: '💰' },
-      { name: 'Become an Entrepreneur', key: 'business', icon: '🚀' },
-      { name: 'Learn About Investing', key: 'business', icon: '📈' },
-      { name: 'Marketing Expert', key: 'business', icon: '📢' },
-      { name: 'CEO/Executive', key: 'business', icon: '👔' },
-      { name: 'Financial Advisor', key: 'business', icon: '💳' },
-      { name: 'Real Estate Agent', key: 'business', icon: '🏘️' },
-      { name: 'Accountant', key: 'business', icon: '🧮' },
-      { name: 'Sales Professional', key: 'business', icon: '🤝' },
-      { name: 'Consultant', key: 'business', icon: '💡' },
-      { name: 'Project Manager', key: 'business', icon: '📋' },
-    ],
-    
-    languages: [
-      { name: 'Learn Spanish', key: 'languages', icon: '🇪🇸' },
-      { name: 'Learn French', key: 'languages', icon: '🇫🇷' },
-      { name: 'Learn Mandarin', key: 'languages', icon: '🇨🇳' },
-      { name: 'Learn Japanese', key: 'languages', icon: '🇯🇵' },
-      { name: 'Learn German', key: 'languages', icon: '🇩🇪' },
-      { name: 'Learn Arabic', key: 'languages', icon: '🇸🇦' },
-      { name: 'Learn Italian', key: 'languages', icon: '🇮🇹' },
-      { name: 'Learn Korean', key: 'languages', icon: '🇰🇷' },
-      { name: 'Learn Portuguese', key: 'languages', icon: '🇧🇷' },
-      { name: 'Become Bilingual', key: 'languages', icon: '🌐' },
-      { name: 'Translator/Interpreter', key: 'languages', icon: '🗣️' },
-    ],
-    
-    life: [
-      { name: 'Learn to Cook', key: 'culinary', icon: '👨‍🍳' },
-      { name: 'Become a Chef', key: 'culinary', icon: '🍳' },
-      { name: 'Learn to Write', key: 'writing', icon: '✍️' },
-      { name: 'Become an Author', key: 'writing', icon: '📚' },
-      { name: 'Public Speaking', key: 'business', icon: '🎤' },
-      { name: 'Leadership Skills', key: 'business', icon: '👑' },
-      { name: 'Time Management', key: 'enrichment', icon: '⏰' },
-      { name: 'Critical Thinking', key: 'enrichment', icon: '🧠' },
-      { name: 'First Aid/Safety', key: 'medical', icon: '🚑' },
-      { name: 'Gardening', key: 'environmental', icon: '🌻' },
-      { name: 'Sewing/Fashion', key: 'visualArts', icon: '🧵' },
-      { name: 'Woodworking', key: 'enrichment', icon: '🪚' },
-      { name: 'Photography', key: 'visualArts', icon: '📷' },
+      { name: 'Start a Business', key: 'business', icon: "\uD83D\uDCBC" },
+      { name: 'Save Money', key: 'business', icon: "\uD83D\uDCB0" },
+      { name: 'Become an Entrepreneur', key: 'business', icon: "\uD83D\uDE80" },
+      { name: 'Learn About Investing', key: 'business', icon: "\uD83D\uDCC8" },
     ],
   };
 
   const activityTypes = [
-    { name: 'Science', icon: '🔬', color: '#EEF2FF', searchTerm: 'science classes' },
-    { name: 'Arts & Crafts', icon: '🎨', color: '#FEF3C7', searchTerm: 'art classes' },
-    { name: 'Music', icon: '🎵', color: '#DBEAFE', searchTerm: 'music lessons' },
-    { name: 'Sports', icon: '⚽', color: '#D1FAE5', searchTerm: 'sports training' },
-    { name: 'Coding', icon: '💻', color: '#FCE7F3', searchTerm: 'coding classes' },
-    { name: 'Dance', icon: '💃', color: '#F3E8FF', searchTerm: 'dance classes' },
+    { name: 'Science', icon: "\uD83D\uDD2C", color: '#EEF2FF', searchTerm: 'science classes' },
+    { name: 'Arts & Crafts', icon: "\uD83C\uDFA8", color: '#FEF3C7', searchTerm: 'art classes' },
+    { name: 'Music', icon: "\uD83C\uDFB5", color: '#DBEAFE', searchTerm: 'music lessons' },
+    { name: 'Sports', icon: "\u26BD", color: '#D1FAE5', searchTerm: 'sports training' },
+    { name: 'Coding', icon: "\uD83D\uDCBB", color: '#FCE7F3', searchTerm: 'coding classes' },
+    { name: 'Dance', icon: "\uD83D\uDC83", color: '#F3E8FF', searchTerm: 'dance classes' },
   ];
 
   const displayedGoals = selectedCategory === 'all' 
     ? allGoals.all 
     : allGoals[selectedCategory] || allGoals.all;
 
-  const filteredGoals = searchQuery.trim() === ''
-    ? displayedGoals
-    : displayedGoals.filter(goal => 
-        goal.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
   const handleGoalSelect = (goal) => {
-    Alert.alert(
+    // Get activities for this goal from the activity database
+    const goalActivities = activityDatabase[goal.key] || [];
+    const allActivitiesForGoal = goalActivities.flatMap(category => 
+      category.activities.map(activity => ({
+        ...activity,
+        category: category.category
+      }))
+    );
+
+    if (allActivitiesForGoal.length === 0) {
+      showAlert(
+        goal.name,
+        'No activities found for this goal yet. Check back soon!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    // Navigate to Kids screen to select a child first, then they can add activities
+    showAlert(
       goal.name,
-      'Would you like to find local providers for this activity?',
+      `Found ${allActivitiesForGoal.length} activities! Please select a child from the Kids tab to add activities for this goal.`,
       [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Find Providers',
-          onPress: () => {
-            navigation.navigate('FindProviders', {
-              child: { name: 'Your Child', id: 'temp' },
-              goal: goal.name,
-              activity: goal.name
-            });
-          }
-        }
+        { text: 'Go to Kids', onPress: () => navigation.navigate('Kids') },
+        { text: 'Cancel', style: 'cancel' }
       ]
     );
   };
@@ -290,7 +121,7 @@ export default function DiscoverScreen({ navigation }) {
       <ScrollView style={styles.content}>
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchIcon}>{"\uD83D\uDD0D"}</Text>
           <TextInput
             style={styles.searchInput}
             placeholder="Search activities, goals..."
@@ -331,12 +162,9 @@ export default function DiscoverScreen({ navigation }) {
           <Text style={styles.sectionTitle}>
             {selectedCategory === 'all' ? 'Popular Goals' : `Popular ${categories.find(c => c.id === selectedCategory)?.name} Goals`}
           </Text>
-          <Text style={styles.sectionSubtitle}>
-            {filteredGoals.length} {filteredGoals.length === 1 ? 'goal' : 'goals'} available
-          </Text>
           
           <View style={styles.goalsGrid}>
-            {filteredGoals.map((goal, idx) => (
+            {displayedGoals.map((goal, idx) => (
               <TouchableOpacity
                 key={idx}
                 style={styles.goalCard}
@@ -367,7 +195,7 @@ export default function DiscoverScreen({ navigation }) {
               >
                 <Text style={styles.activityCardIcon}>{activity.icon}</Text>
                 <Text style={styles.activityCardTitle}>{activity.name}</Text>
-                <Text style={styles.activityCardAction}>Find nearby →</Text>
+                <Text style={styles.activityCardAction}>Find nearby {"\u203A"}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -375,12 +203,12 @@ export default function DiscoverScreen({ navigation }) {
 
         {/* Tips Section */}
         <View style={styles.tipsSection}>
-          <Text style={styles.tipsTitle}>💡 Pro Tips</Text>
+          <Text style={styles.tipsTitle}>{"\uD83D\uDCA1"} Pro Tips</Text>
           <Text style={styles.tipsText}>
-            • Start with 2-3 activities per week{'\n'}
-            • Mix different types of activities{'\n'}
-            • Let your child explore their interests{'\n'}
-            • Track progress to see what they enjoy most
+            {"\u2022"} Start with 2-3 activities per week{'\n'}
+            {"\u2022"} Mix different types of activities{'\n'}
+            {"\u2022"} Let your child explore their interests{'\n'}
+            {"\u2022"} Track progress to see what they enjoy most
           </Text>
         </View>
       </ScrollView>
@@ -473,11 +301,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: '#6B7280',
     marginBottom: 16,
   },
   goalsGrid: {

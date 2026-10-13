@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
-import { getActivityPlan } from '../data/activityDatabase';
+import { getGoalMatch, getPlanForCategory, CATEGORY_LABELS } from '../data/activityDatabase';
+import { showAlert } from '../utils/crossAlert';
+import { useSubscription } from '../context/SubscriptionContext';
 
 export default function ActivityPlanScreen({ route, navigation }) {
   const { child, goal } = route.params;
-  const suggestedActivities = getActivityPlan(goal);
+  const { checkCanSchedule } = useSubscription();
+  const match = React.useMemo(() => getGoalMatch(goal), [goal]);
+  const [pickedCategory, setPickedCategory] = useState(null);
+  const suggestedActivities = pickedCategory ? getPlanForCategory(pickedCategory) : match.plan;
+  const needsPicker = match.confidence === 'none' && !pickedCategory;
+  const searchTerm = (goal || '').replace(/^\s*(i want to be|to be|become|be)\s+(a|an|the)?\s*/i, '').trim() || goal;
   const [customPlan, setCustomPlan] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -44,6 +51,32 @@ export default function ActivityPlanScreen({ route, navigation }) {
     return unsubscribe;
   }, [child.id, goal]);
 
+  // Best-effort log of goals we could not classify (and what the user chose),
+  // so the matcher can be improved. Never blocks the UI.
+  const logUnmatched = async (chosenCategory) => {
+    try {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+      await addDoc(collection(db, 'unmatchedGoals'), {
+        userId,
+        goal,
+        chosenCategory: chosenCategory || null,
+        createdAt: new Date()
+      });
+    } catch (e) {
+      // ignore (e.g. Firestore rules)
+    }
+  };
+
+  useEffect(() => {
+    if (match.confidence === 'none') logUnmatched(null);
+  }, [goal]);
+
+  const pickCategory = (key) => {
+    setPickedCategory(key);
+    logUnmatched(key);
+  };
+
   const addToPlan = async (activity, category) => {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
@@ -60,15 +93,15 @@ export default function ActivityPlanScreen({ route, navigation }) {
         category: category,
         createdAt: new Date()
       });
-      Alert.alert('Added! ✅', `${activity.name} added to your plan`);
+      showAlert('Added! ✅', `${activity.name} added to your plan`);
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
   const addCustomActivity = async () => {
     if (!newActivity.name || !newActivity.frequency || !newActivity.duration) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showAlert('Error', 'Please fill in all fields');
       return;
     }
 
@@ -90,14 +123,14 @@ export default function ActivityPlanScreen({ route, navigation }) {
 
       setNewActivity({ name: '', frequency: '', duration: '', category: 'Custom' });
       setShowAddModal(false);
-      Alert.alert('Success', 'Custom activity added to your plan!');
+      showAlert('Success', 'Custom activity added to your plan!');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
   const removeFromPlan = async (activityId) => {
-    Alert.alert(
+    showAlert(
       'Remove Activity',
       'Remove this from your plan?',
       [
@@ -109,7 +142,7 @@ export default function ActivityPlanScreen({ route, navigation }) {
             try {
               await deleteDoc(doc(db, 'customActivities', activityId));
             } catch (error) {
-              Alert.alert('Error', error.message);
+              showAlert('Error', error.message);
             }
           }
         }
@@ -124,7 +157,7 @@ export default function ActivityPlanScreen({ route, navigation }) {
 
   const scheduleActivity = async () => {
     if (!selectedActivity || !selectedDate) {
-      Alert.alert('Error', 'Please select a date');
+      showAlert('Error', 'Please select a date');
       return;
     }
 
@@ -149,6 +182,11 @@ export default function ActivityPlanScreen({ route, navigation }) {
           else if (recurrence === 'biweekly') currentDate.setDate(currentDate.getDate() + 14);
           else if (recurrence === 'monthly') currentDate.setMonth(currentDate.getMonth() + 1);
         }
+      }
+
+      if (!(await checkCanSchedule(dates.length, recurrence, navigation))) {
+        setShowScheduleModal(false);
+        return;
       }
 
       await Promise.all(
@@ -177,9 +215,9 @@ export default function ActivityPlanScreen({ route, navigation }) {
       setRecurringUntil('');
       setSelectedDate(new Date().toISOString().split('T')[0]);
 
-      Alert.alert('Success! 🎉', `${dates.length} session(s) scheduled!`);
+      showAlert('Success! 🎉', `${dates.length} session(s) scheduled!`);
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
@@ -188,7 +226,7 @@ export default function ActivityPlanScreen({ route, navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Activity Plan</Text>
         <Text style={styles.headerSubtitle}>
-          {child.name}, Age {child.age} â€¢ {goal}
+          {child.name}, Age {child.age} - {goal}
         </Text>
       </View>
 
@@ -260,6 +298,35 @@ export default function ActivityPlanScreen({ route, navigation }) {
           <Text style={styles.sectionSubtitle}>
             Based on "{goal}" - Add to your plan to get started
           </Text>
+
+          {needsPicker && (
+            <View style={styles.pickerCard}>
+              <Text style={styles.pickerTitle}>What area is this closest to?</Text>
+              <Text style={styles.pickerText}>
+                We're not sure which activities fit "{goal}" yet. Pick the closest area and we'll suggest activities for it.
+              </Text>
+              <View style={styles.pickerChips}>
+                {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                  <TouchableOpacity key={key} style={styles.pickerChip} onPress={() => pickCategory(key)}>
+                    <Text style={styles.pickerChipText}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity
+                style={styles.pickerSearch}
+                onPress={() => navigation.navigate('FindProviders', { child, goal, activity: searchTerm })}
+              >
+                <Text style={styles.pickerSearchText}>🔍 Search nearby for "{searchTerm}"</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {pickedCategory && (
+            <Text style={styles.pickerNote}>
+              Showing {CATEGORY_LABELS[pickedCategory]} activities.{' '}
+              <Text style={styles.pickerChange} onPress={() => setPickedCategory(null)}>Change</Text>
+            </Text>
+          )}
 
           {suggestedActivities.map((section, index) => (
             <View key={index} style={styles.suggestedSection}>
@@ -761,4 +828,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
   },
+  pickerCard: { backgroundColor: '#FDF4FF', borderWidth: 2, borderColor: '#E9D5FF', borderRadius: 12, padding: 16, marginBottom: 16 },
+  pickerTitle: { fontSize: 16, fontWeight: 'bold', color: '#6B21A8', marginBottom: 6 },
+  pickerText: { fontSize: 13, color: '#6B7280', marginBottom: 12, lineHeight: 18 },
+  pickerChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pickerChip: { backgroundColor: 'white', borderWidth: 1, borderColor: '#D8B4FE', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8 },
+  pickerChipText: { fontSize: 13, color: '#7C3AED', fontWeight: '600' },
+  pickerSearch: { marginTop: 14, backgroundColor: '#9333EA', borderRadius: 10, padding: 12, alignItems: 'center' },
+  pickerSearchText: { color: 'white', fontSize: 14, fontWeight: '600' },
+  pickerNote: { fontSize: 13, color: '#6B7280', marginBottom: 12 },
+  pickerChange: { color: '#9333EA', fontWeight: '700', textDecorationLine: 'underline' },
 });

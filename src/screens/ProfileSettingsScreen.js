@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert, Image } from 'react-native';
 import { auth } from '../../firebase';
+import { updateEmail, updateProfile } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
+import { showAlert } from '../utils/crossAlert';
 
 export default function ProfileSettingsScreen({ navigation }) {
   const [email, setEmail] = useState(auth.currentUser?.email || '');
@@ -13,7 +15,7 @@ export default function ProfileSettingsScreen({ navigation }) {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please allow access to your photos to set a profile picture.');
+      showAlert('Permission needed', 'Please allow access to your photos to set a profile picture.');
       return;
     }
 
@@ -35,27 +37,27 @@ export default function ProfileSettingsScreen({ navigation }) {
     try {
       const user = auth.currentUser;
       
-      // Update email if changed
+     // Update email if changed
       if (email !== user.email && email.trim()) {
-        await user.updateEmail(email.trim());
+        await updateEmail(user, email.trim());
       }
 
       // Update display name and photo
-      await user.updateProfile({
+      await updateProfile(user, {
         displayName: displayName.trim() || user.email?.split('@')[0],
         photoURL: photoURL
       });
 
-      Alert.alert('Success', 'Profile updated successfully!');
+      showAlert('Success', 'Profile updated successfully!');
       navigation.goBack();
     } catch (error) {
       if (error.code === 'auth/requires-recent-login') {
-        Alert.alert(
+        showAlert(
           'Re-authentication Required',
           'For security reasons, please sign out and sign back in to update your email.'
         );
       } else {
-        Alert.alert('Error', error.message);
+        showAlert('Error', error.message);
       }
     } finally {
       setSaving(false);

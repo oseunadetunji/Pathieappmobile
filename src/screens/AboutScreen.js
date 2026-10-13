@@ -14,7 +14,7 @@ export default function AboutScreen({ navigation }) {
   };
 
   const openTerms = () => {
-    Linking.openURL('https://www.pathieapp.com/terms-of-use');
+    Linking.openURL('https://pathieapp.com/terms.html');
   };
 
   return (

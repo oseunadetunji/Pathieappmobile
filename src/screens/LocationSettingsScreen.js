@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from 'expo-location';
+import { geocodeSearch, reverseLookup, getDeviceCoords } from '../utils/geocode';
+import { showAlert } from '../utils/crossAlert';
 
 export default function LocationSettingsScreen({ navigation }) {
   const [location, setLocation] = useState(null);
@@ -44,50 +45,9 @@ export default function LocationSettingsScreen({ navigation }) {
 
     setSearchingLocations(true);
     try {
-      // Geocode the partial address to get multiple results
-      const results = await Location.geocodeAsync(searchText);
-      
-      if (results && results.length > 0) {
-        // Get address details for each result
-        const detailedResults = await Promise.all(
-          results.slice(0, 5).map(async (result) => {
-            try {
-              const address = await Location.reverseGeocodeAsync({
-                latitude: result.latitude,
-                longitude: result.longitude
-              });
-              
-              if (address && address.length > 0) {
-                const addr = address[0];
-                return {
-                  latitude: result.latitude,
-                  longitude: result.longitude,
-                  city: addr.city || addr.subregion || '',
-                  region: addr.region || '',
-                  country: addr.country || '',
-                  postalCode: addr.postalCode || '',
-                  displayName: [
-                    addr.city || addr.subregion,
-                    addr.region,
-                    addr.country
-                  ].filter(Boolean).join(', ')
-                };
-              }
-              return null;
-            } catch (err) {
-              console.error('Error reverse geocoding:', err);
-              return null;
-            }
-          })
-        );
-
-        const validResults = detailedResults.filter(r => r !== null);
-        setSuggestions(validResults);
-        setShowSuggestions(validResults.length > 0);
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
-      }
+      const results = await geocodeSearch(searchText, 5);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
     } catch (error) {
       console.error('Error searching locations:', error);
       setSuggestions([]);
@@ -111,7 +71,7 @@ export default function LocationSettingsScreen({ navigation }) {
     // Set new timer to search after 500ms of no typing
     const timer = setTimeout(() => {
       searchLocationSuggestions(text);
-    }, 500);
+    }, 800);
     
     setDebounceTimer(timer);
   };
@@ -143,14 +103,14 @@ export default function LocationSettingsScreen({ navigation }) {
       setLocation(locationData);
       setSavedLocation(locationData);
       
-      Alert.alert(
+      showAlert(
         'Location Saved! ✓',
         `Your location has been set to: ${suggestion.displayName}`,
         [{ text: 'OK' }]
       );
     } catch (error) {
       console.error('Error saving location:', error);
-      Alert.alert('Error', 'Failed to save location');
+      showAlert('Error', 'Failed to save location');
     } finally {
       setLoading(false);
     }
@@ -159,59 +119,47 @@ export default function LocationSettingsScreen({ navigation }) {
   const getCurrentLocation = async () => {
     setLoading(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Location permission is needed to find nearby activities. Please enable it in your device settings.',
-          [{ text: 'OK' }]
-        );
-        setLoading(false);
-        return;
-      }
+      const coords = await getDeviceCoords();
+      const place = await reverseLookup(coords.latitude, coords.longitude);
 
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High
-      });
+      const locationData = {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        address: place?.displayName || `${coords.latitude.toFixed(3)}, ${coords.longitude.toFixed(3)}`,
+        city: place?.city || '',
+        region: place?.region || '',
+        country: place?.country || '',
+        postalCode: place?.postalCode || '',
+        timestamp: new Date().toISOString()
+      };
 
-      // Reverse geocode to get address
-      const address = await Location.reverseGeocodeAsync({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude
-      });
+      await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
+      setLocation(locationData);
+      setSavedLocation(locationData);
+      setCustomLocation(locationData.address);
 
-      if (address && address.length > 0) {
-        const addr = address[0];
-        const locationData = {
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-          address: `${addr.city || ''}, ${addr.region || ''}, ${addr.country || ''}`.replace(/^, |, $/g, ''),
-          city: addr.city,
-          region: addr.region,
-          country: addr.country,
-          postalCode: addr.postalCode,
-          timestamp: new Date().toISOString()
-        };
-
-        await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
-        setLocation(locationData);
-        setSavedLocation(locationData);
-        setCustomLocation(locationData.address);
-        
-        Alert.alert(
-          'Location Saved! ✓',
-          `Your location has been set to: ${locationData.address}`,
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('Error getting location:', error);
-      Alert.alert(
-        'Error',
-        'Failed to get your current location. Please try again or enter manually.',
+      showAlert(
+        'Location Saved! \u2713',
+        `Your location has been set to: ${locationData.address}`,
         [{ text: 'OK' }]
       );
+    } catch (error) {
+      console.error('Error getting location:', error);
+      if (error.code === 'denied') {
+        showAlert(
+          'Permission Required',
+          Platform.OS === 'web'
+            ? 'Location access is blocked for this site. Allow it from the lock/location icon in your browser address bar, then try again, or type your city below.'
+            : 'Location permission is needed to find nearby activities. Please enable it in your device settings.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        showAlert(
+          'Error',
+          'Failed to get your current location. Please try again or enter it manually.',
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -219,34 +167,24 @@ export default function LocationSettingsScreen({ navigation }) {
 
   const saveCustomLocation = async () => {
     if (!customLocation.trim()) {
-      Alert.alert('Error', 'Please enter a location');
+      showAlert('Error', 'Please enter a location');
       return;
     }
 
     setLoading(true);
     try {
-      // Geocode the address to get coordinates
-      const results = await Location.geocodeAsync(customLocation);
-      
+      const results = await geocodeSearch(customLocation, 1);
+
       if (results && results.length > 0) {
         const result = results[0];
-        
-        // Reverse geocode to get full address details
-        const address = await Location.reverseGeocodeAsync({
-          latitude: result.latitude,
-          longitude: result.longitude
-        });
-
-        const addr = address && address.length > 0 ? address[0] : {};
-        
         const locationData = {
           latitude: result.latitude,
           longitude: result.longitude,
           address: customLocation.trim(),
-          city: addr.city || '',
-          region: addr.region || '',
-          country: addr.country || '',
-          postalCode: addr.postalCode || '',
+          city: result.city,
+          region: result.region,
+          country: result.country,
+          postalCode: result.postalCode,
           timestamp: new Date().toISOString(),
           isCustom: true
         };
@@ -254,14 +192,14 @@ export default function LocationSettingsScreen({ navigation }) {
         await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
         setLocation(locationData);
         setSavedLocation(locationData);
-        
-        Alert.alert(
-          'Location Saved! ✓',
+
+        showAlert(
+          'Location Saved! \u2713',
           `Your location has been set to: ${customLocation}`,
           [{ text: 'OK' }]
         );
       } else {
-        Alert.alert(
+        showAlert(
           'Location Not Found',
           'Could not find this location. Please check the spelling and try again.',
           [{ text: 'OK' }]
@@ -269,7 +207,7 @@ export default function LocationSettingsScreen({ navigation }) {
       }
     } catch (error) {
       console.error('Error saving custom location:', error);
-      Alert.alert(
+      showAlert(
         'Error',
         'Failed to save location. Please check your internet connection and try again.',
         [{ text: 'OK' }]
@@ -280,7 +218,7 @@ export default function LocationSettingsScreen({ navigation }) {
   };
 
   const clearLocation = async () => {
-    Alert.alert(
+    showAlert(
       'Clear Location',
       'Are you sure you want to clear your saved location?',
       [
@@ -294,9 +232,9 @@ export default function LocationSettingsScreen({ navigation }) {
               setLocation(null);
               setSavedLocation(null);
               setCustomLocation('');
-              Alert.alert('Cleared', 'Location has been cleared');
+              showAlert('Cleared', 'Location has been cleared');
             } catch (error) {
-              Alert.alert('Error', 'Failed to clear location');
+              showAlert('Error', 'Failed to clear location');
             }
           }
         }
@@ -385,7 +323,7 @@ export default function LocationSettingsScreen({ navigation }) {
                   <Text style={styles.suggestionIcon}>📍</Text>
                   <View style={styles.suggestionTextContainer}>
                     <Text style={styles.suggestionText}>{suggestion.displayName}</Text>
-                    {suggestion.postalCode && (
+                    {!!suggestion.postalCode && (
                       <Text style={styles.suggestionSubtext}>{suggestion.postalCode}</Text>
                     )}
                   </View>

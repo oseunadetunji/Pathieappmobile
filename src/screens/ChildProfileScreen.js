@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { doc, onSnapshot, updateDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
+import { showAlert } from '../utils/crossAlert';
+import { useSubscription } from '../context/SubscriptionContext';
 
 export default function ChildProfileScreen({ route, navigation }) {
   const { child } = route.params;
+  const { startAddGoal } = useSubscription();
   const [currentChild, setCurrentChild] = useState(child);
 
   useEffect(() => {
@@ -24,7 +27,7 @@ export default function ChildProfileScreen({ route, navigation }) {
   const handleDeleteGoal = async (goalToDelete, index) => {
     const userId = auth.currentUser?.uid;
     if (!userId) {
-      Alert.alert('Error', 'You must be logged in to delete a goal');
+      showAlert('Error', 'You must be logged in to delete a goal');
       return;
     }
 
@@ -65,7 +68,7 @@ export default function ChildProfileScreen({ route, navigation }) {
       
       deleteMessage += `This action cannot be undone.`;
 
-      Alert.alert(
+      showAlert(
         '⚠️ Delete Goal',
         deleteMessage,
         [
@@ -100,10 +103,10 @@ export default function ChildProfileScreen({ route, navigation }) {
                   goals: updatedGoals
                 });
 
-                Alert.alert('Success', `Goal "${goalName}" has been deleted`);
+                showAlert('Success', `Goal "${goalName}" has been deleted`);
               } catch (error) {
                 console.error('Error deleting goal:', error);
-                Alert.alert('Error', 'Failed to delete goal. Please try again.');
+                showAlert('Error', 'Failed to delete goal. Please try again.');
               }
             }
           }
@@ -111,7 +114,7 @@ export default function ChildProfileScreen({ route, navigation }) {
       );
     } catch (error) {
       console.error('Error preparing delete:', error);
-      Alert.alert('Error', 'Failed to prepare deletion. Please try again.');
+      showAlert('Error', 'Failed to prepare deletion. Please try again.');
     }
   };
 
@@ -131,7 +134,7 @@ export default function ChildProfileScreen({ route, navigation }) {
             <Text style={styles.sectionTitle}>Goals</Text>
             <TouchableOpacity 
               style={styles.addButton}
-              onPress={() => navigation.navigate('AddGoal', { child: currentChild, mode: 'addGoal' })}
+              onPress={() => startAddGoal(currentChild, navigation)}
             >
               <Text style={styles.addButtonText}>+ Add Goal</Text>
             </TouchableOpacity>

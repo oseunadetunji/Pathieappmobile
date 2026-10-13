@@ -2,12 +2,13 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { auth } from '../../firebase';
 import { useSubscription } from '../context/SubscriptionContext';
+import { showAlert } from '../utils/crossAlert';
 
 export default function SettingsScreen({ navigation }) {
   const { tier, subscription } = useSubscription();
 
   const handleSignOut = async () => {
-    Alert.alert(
+    showAlert(
       'Sign Out',
       'Are you sure you want to sign out?',
       [
@@ -19,7 +20,7 @@ export default function SettingsScreen({ navigation }) {
             try {
               await auth.signOut();
             } catch (error) {
-              Alert.alert('Error', error.message);
+              showAlert('Error', error.message);
             }
           }
         }

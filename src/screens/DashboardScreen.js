@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { auth, db } from '../../firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function DashboardScreen({ navigation }) {
   const [children, setChildren] = useState([]);
@@ -12,8 +13,8 @@ export default function DashboardScreen({ navigation }) {
     if (!userId) return;
 
     // Fetch children
-    const childrenQuery = db.collection('children').where('userId', '==', userId);
-    const unsubChildren = childrenQuery.onSnapshot((snapshot) => {
+    const childrenQuery = query(collection(db, 'children'), where('userId', '==', userId));
+    const unsubChildren = onSnapshot(childrenQuery, (snapshot) => {
       const childrenData = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -29,8 +30,8 @@ export default function DashboardScreen({ navigation }) {
     });
 
     // Fetch activities
-    const activitiesQuery = db.collection('activities').where('userId', '==', userId);
-    const unsubActivities = activitiesQuery.onSnapshot((snapshot) => {
+     const activitiesQuery = query(collection(db, 'activities'), where('userId', '==', userId));
+     const unsubActivities = onSnapshot(activitiesQuery, (snapshot) => {
       const acts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setActivities(acts);
       
@@ -59,7 +60,7 @@ export default function DashboardScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome back! 👋</Text>
+        <Text style={styles.greeting}>Welcome back! {"\uD83D\uDC4B"}</Text>
         <Text style={styles.subtitle}>Here's your family's progress</Text>
       </View>
 
@@ -82,36 +83,33 @@ export default function DashboardScreen({ navigation }) {
       {/* Quick Actions */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionsGrid}>
-          <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('Kids')}
-          >
-            <Text style={styles.actionIcon}>👶</Text>
-            <Text style={styles.actionLabel}>Add Child</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('Discover')}
-          >
-            <Text style={styles.actionIcon}>🔍</Text>
-            <Text style={styles.actionLabel}>Find Activities</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('Calendar')}
-          >
-            <Text style={styles.actionIcon}>📅</Text>
-            <Text style={styles.actionLabel}>View Calendar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('FindProviders')}
-          >
-            <Text style={styles.actionIcon}>👥</Text>
-            <Text style={styles.actionLabel}>Find Providers</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.activityCard}
+          onPress={() => navigation.navigate('Kids')}
+        >
+          <View style={styles.activityInfo}>
+            <Text style={styles.activityName}>{"\uD83D\uDC76"} Add Child</Text>
+          </View>
+          <Text style={styles.activityArrow}>{"\u203A"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.activityCard}
+          onPress={() => navigation.navigate('Discover')}
+        >
+          <View style={styles.activityInfo}>
+            <Text style={styles.activityName}>{"\uD83D\uDD0D"} Find Activities</Text>
+          </View>
+          <Text style={styles.activityArrow}>{"\u203A"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.activityCard}
+          onPress={() => navigation.navigate('Calendar')}
+        >
+          <View style={styles.activityInfo}>
+            <Text style={styles.activityName}>{"\uD83D\uDCC5"} View Calendar</Text>
+          </View>
+          <Text style={styles.activityArrow}>{"\u203A"}</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Upcoming Activities */}
@@ -125,7 +123,7 @@ export default function DashboardScreen({ navigation }) {
 
         {upcomingActivities.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📅</Text>
+            <Text style={styles.emptyIcon}>{"\uD83D\uDCC5"}</Text>
             <Text style={styles.emptyText}>No upcoming activities</Text>
             <Text style={styles.emptySubtext}>Discover activities to get started</Text>
           </View>
@@ -134,15 +132,15 @@ export default function DashboardScreen({ navigation }) {
             <TouchableOpacity 
               key={activity.id}
               style={styles.activityCard}
-              onPress={() => navigation.navigate('ActivityPlan', { activity })}
+              onPress={() => navigation.navigate('Calendar')}
             >
               <View style={styles.activityInfo}>
-                <Text style={styles.activityName}>{activity.name}</Text>
+                <Text style={styles.activityName}>{activity.activityName || activity.name || 'Untitled Activity'}</Text>
                 <Text style={styles.activityTime}>
-                  {activity.date ? new Date(activity.date).toLocaleDateString() : 'No date set'}
+                  {activity.scheduledDate ? new Date(activity.scheduledDate.seconds * 1000).toLocaleDateString() : 'No date set'}
                 </Text>
               </View>
-              <Text style={styles.activityArrow}>›</Text>
+              <Text style={styles.activityArrow}>{"\u203A"}</Text>
             </TouchableOpacity>
           ))
         )}
@@ -159,7 +157,7 @@ export default function DashboardScreen({ navigation }) {
 
         {children.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>👨‍👩‍👧‍👦</Text>
+            <Text style={styles.emptyIcon}>{"\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66"}</Text>
             <Text style={styles.emptyText}>No children added yet</Text>
             <TouchableOpacity 
               style={styles.addChildButton}
@@ -179,7 +177,7 @@ export default function DashboardScreen({ navigation }) {
                   navigation.navigate('ChildProfile', { child });
                 }}
               >
-                <Text style={styles.childAvatar}>{child.avatar || '👧'}</Text>
+                <Text style={styles.childAvatar}>{child.avatar || "\uD83D\uDC67"}</Text>
                 <Text style={styles.childName}>{child.name}</Text>
                 <Text style={styles.childAge}>{child.age} years old</Text>
               </TouchableOpacity>
@@ -258,33 +256,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9333EA',
     fontWeight: '600',
-  },
-  actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  actionCard: {
-    width: '48%',
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  actionIcon: {
-    fontSize: 40,
-    marginBottom: 10,
-  },
-  actionLabel: {
-    fontSize: 14,
-    color: '#1F2937',
-    fontWeight: '600',
-    textAlign: 'center',
   },
   activityCard: {
     backgroundColor: '#FFFFFF',

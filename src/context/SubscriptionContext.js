@@ -1,34 +1,24 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, db } from '../../firebase';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { auth, db, functions } from '../../firebase';
+import { doc, onSnapshot, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { showAlert } from '../utils/crossAlert';
 
 // Subscription tier definitions
 export const SUBSCRIPTION_TIERS = {
   FREE: 'free',
-  STARTER: 'starter',
-  FAMILY: 'family',
-  PREMIUM: 'premium'
+  FAMILY: 'family'
 };
 
 // Pricing information
 export const SUBSCRIPTION_PRICING = {
-  [SUBSCRIPTION_TIERS.STARTER]: {
-    monthly: 9.99,
-    annual: 47.90,
-    name: 'Starter',
-    description: 'Perfect for 1 child'
-  },
   [SUBSCRIPTION_TIERS.FAMILY]: {
-    monthly: 19.99,
-    annual: 95.90,
+    monthly: 9.99,
+    annual: 101.90,
     name: 'Family',
-    description: 'Perfect for 2+ children',
+    description: 'Unlimited children, goals and activities',
     popular: true
-  },
-  [SUBSCRIPTION_TIERS.PREMIUM]: {
-    monthly: 29.99,
-    annual: 191.90,
-    name: 'Premium',
-    description: 'Perfect for power users'
   }
 };
 
@@ -49,21 +39,6 @@ export const SUBSCRIPTION_LIMITS = {
     canUseCostTracking: false,
     supportResponseTime: '7 days'
   },
-  [SUBSCRIPTION_TIERS.STARTER]: {
-    maxChildren: 1,
-    maxGoalsPerChild: Infinity,
-    maxScheduledActivities: 30,
-    maxProviderSearches: 20,
-    canUseRecurringSchedules: false,
-    canUseAdvancedAnalytics: false,
-    canExportCalendar: false,
-    canUseFamilySharing: false,
-    canUseBulkScheduling: false,
-    canUseAIRecommendations: false,
-    canUseProviderComparison: false,
-    canUseCostTracking: false,
-    supportResponseTime: '48 hours'
-  },
   [SUBSCRIPTION_TIERS.FAMILY]: {
     maxChildren: Infinity,
     maxGoalsPerChild: Infinity,
@@ -78,21 +53,6 @@ export const SUBSCRIPTION_LIMITS = {
     canUseProviderComparison: false,
     canUseCostTracking: false,
     supportResponseTime: '24 hours'
-  },
-  [SUBSCRIPTION_TIERS.PREMIUM]: {
-    maxChildren: Infinity,
-    maxGoalsPerChild: Infinity,
-    maxScheduledActivities: Infinity,
-    maxProviderSearches: Infinity,
-    canUseRecurringSchedules: true,
-    canUseAdvancedAnalytics: true,
-    canExportCalendar: true,
-    canUseFamilySharing: true,
-    canUseBulkScheduling: true,
-    canUseAIRecommendations: true,
-    canUseProviderComparison: true,
-    canUseCostTracking: true,
-    supportResponseTime: '8 hours'
   }
 };
 
@@ -123,13 +83,11 @@ export function SubscriptionProvider({ children }) {
     }
 
     // Listen to subscription changes
-    const unsubscribeSubscription = db
-      .collection('subscriptions')
-      .doc(userId)
-      .onSnapshot(
-        (doc) => {
-          if (doc.exists) {
-            const data = doc.data();
+    const unsubscribeSubscription = onSnapshot(
+      doc(db, 'subscriptions', userId),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
             setSubscription({
               tier: data.tier || SUBSCRIPTION_TIERS.FREE,
               status: data.status || 'active',
@@ -158,13 +116,11 @@ export function SubscriptionProvider({ children }) {
       );
 
     // Listen to usage data
-    const unsubscribeUsage = db
-      .collection('usage')
-      .doc(userId)
-      .onSnapshot(
-        (doc) => {
-          if (doc.exists) {
-            const data = doc.data();
+  const unsubscribeUsage = onSnapshot(
+      doc(db, 'usage', userId),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
             setUsage({
               childrenCount: data.childrenCount || 0,
               scheduledActivitiesCount: data.scheduledActivitiesCount || 0,
@@ -211,38 +167,18 @@ export function SubscriptionProvider({ children }) {
     return limits[featureName] === true;
   };
 
-  // Update subscription tier (for testing or manual assignment)
-  const updateSubscriptionTier = async (tier, billingCycle = 'monthly') => {
-    const userId = auth.currentUser?.uid;
-    if (!userId) return;
-
-    try {
-      await db.collection('subscriptions').doc(userId).set({
-        tier,
-        billingCycle,
-        status: 'active',
-        startDate: new Date(),
-        expiresAt: null, // Set based on billing cycle in production
-        updatedAt: new Date()
-      }, { merge: true });
-    } catch (error) {
-      console.error('Error updating subscription:', error);
-      throw error;
-    }
-  };
-
   // Increment usage counters
   const incrementUsage = async (metric) => {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
 
     try {
-      const usageRef = db.collection('usage').doc(userId);
-      const usageDoc = await usageRef.get();
+      const usageRef = doc(db, 'usage', userId);
+      const usageDoc = await getDoc(usageRef);
       
-      if (!usageDoc.exists) {
+      if (!usageDoc.exists()) {
         // Create initial usage document
-        await usageRef.set({
+        await setDoc(usageRef, {
           childrenCount: metric === 'childrenCount' ? 1 : 0,
           scheduledActivitiesCount: metric === 'scheduledActivitiesCount' ? 1 : 0,
           providerSearchesThisMonth: metric === 'providerSearchesThisMonth' ? 1 : 0,
@@ -255,7 +191,7 @@ export function SubscriptionProvider({ children }) {
           [metric]: (usageDoc.data()[metric] || 0) + 1,
           updatedAt: new Date()
         };
-        await usageRef.update(updates);
+        await updateDoc(usageRef, updates);
       }
     } catch (error) {
       console.error('Error incrementing usage:', error);
@@ -268,55 +204,130 @@ export function SubscriptionProvider({ children }) {
     if (!userId) return;
 
     try {
-      const usageRef = db.collection('usage').doc(userId);
-      const usageDoc = await usageRef.get();
+      const usageRef = doc(db, 'usage', userId);
+      const usageDoc = await getDoc(usageRef);
       
-      if (usageDoc.exists) {
+      if (usageDoc.exists()) {
         const currentValue = usageDoc.data()[metric] || 0;
         const updates = {
           [metric]: Math.max(0, currentValue - 1), // Don't go below 0
           updatedAt: new Date()
         };
-        await usageRef.update(updates);
+        await updateDoc(usageRef, updates);
       }
     } catch (error) {
       console.error('Error decrementing usage:', error);
     }
   };
 
-  // Get upgrade prompt message
+  // Get upgrade prompt message (launch lineup: Free + Family only)
   const getUpgradeMessage = (feature) => {
-    const currentTier = subscription?.tier || SUBSCRIPTION_TIERS.FREE;
-    
     const messages = {
-      maxChildren: {
-        free: 'Upgrade to Starter ($9.99/mo) to add 1 child',
-        starter: 'Upgrade to Family ($19.99/mo) for unlimited children'
-      },
-      maxScheduledActivities: {
-        free: 'Upgrade to Starter ($9.99/mo) for 30 activities',
-        starter: 'Upgrade to Family ($19.99/mo) for unlimited activities'
-      },
-      maxProviderSearches: {
-        free: 'Upgrade to Starter ($9.99/mo) for 20 searches/month',
-        starter: 'Upgrade to Family ($19.99/mo) for unlimited searches'
-      },
-      recurringSchedules: {
-        free: 'Upgrade to Family ($19.99/mo) for recurring schedules',
-        starter: 'Upgrade to Family ($19.99/mo) for recurring schedules'
-      },
-      advancedAnalytics: {
-        free: 'Upgrade to Family ($19.99/mo) for advanced analytics',
-        starter: 'Upgrade to Family ($19.99/mo) for advanced analytics'
-      },
-      aiRecommendations: {
-        free: 'Upgrade to Premium ($29.99/mo) for AI recommendations',
-        starter: 'Upgrade to Premium ($29.99/mo) for AI recommendations',
-        family: 'Upgrade to Premium ($29.99/mo) for AI recommendations'
-      }
+      maxChildren: 'Free includes 1 child. Upgrade to Family ($9.99/mo) to add more children.',
+      maxGoalsPerChild: 'Free includes 2 goals per child. Upgrade to Family ($9.99/mo) for unlimited goals.',
+      maxScheduledActivities: 'Free includes 10 scheduled activities. Upgrade to Family ($9.99/mo) for unlimited, or complete or remove some to free up space.',
+      maxProviderSearches: "You've used your 5 free activity searches this month. Upgrade to Family ($9.99/mo) for unlimited searches.",
+      recurringSchedules: 'Recurring schedules are a Family feature. Upgrade to Family ($9.99/mo), or schedule a single session.',
+      advancedAnalytics: 'Upgrade to Family ($9.99/mo) for advanced analytics',
     };
 
-    return messages[feature]?.[currentTier] || 'Upgrade to unlock this feature';
+    return messages[feature] || 'Upgrade to Family to unlock this feature';
+  };
+
+  // ---- Limit gates (call these instead of navigating straight to AddGoal) ----
+  const promptUpgrade = (feature, navigation) => {
+    showAlert('Upgrade to Family', getUpgradeMessage(feature), [
+      { text: 'Not now', style: 'cancel' },
+      { text: 'See plans', onPress: () => navigation.navigate('Pricing') }
+    ]);
+  };
+
+  // Verified email is required before creating a child profile (curbs throwaway accounts).
+  // Verification is by a 6-digit code emailed from our own domain (a code can't be used up by link scanners).
+  const [verifyOpen, setVerifyOpen] = useState(false);
+
+  const ensureVerifiedEmail = async () => {
+    const user = auth.currentUser;
+    if (!user) return false;
+    try { await user.reload(); } catch (e) { /* offline: fall through to current state */ }
+    if (auth.currentUser?.emailVerified) return true;
+    setVerifyOpen(true);
+    return false;
+  };
+
+  // Counts real child documents (not the client-writable usage counter).
+  const checkCanAddChild = async (navigation) => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return false;
+    if (!(await ensureVerifiedEmail())) return false;
+    const max = getLimits().maxChildren;
+    if (max !== Infinity) {
+      try {
+        const snap = await getDocs(query(collection(db, 'children'), where('userId', '==', userId)));
+        if (snap.size >= max) {
+          promptUpgrade('maxChildren', navigation);
+          return false;
+        }
+      } catch (e) {
+        console.error('Child limit check failed:', e);
+      }
+    }
+    return true;
+  };
+
+  const checkCanAddGoal = (child, navigation) => {
+    const max = getLimits().maxGoalsPerChild;
+    if (max !== Infinity && (child?.goals?.length || 0) >= max) {
+      promptUpgrade('maxGoalsPerChild', navigation);
+      return false;
+    }
+    return true;
+  };
+
+  // Scheduled-activity cap (counts real upcoming/not-completed docs) + recurring is a Family feature.
+  // Returns true if allowed; otherwise shows the upgrade prompt and returns false.
+  const checkCanSchedule = async (newCount, recurrence, navigation) => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return false;
+    if (recurrence && recurrence !== 'once' && !hasFeature('canUseRecurringSchedules')) {
+      promptUpgrade('recurringSchedules', navigation);
+      return false;
+    }
+    const max = getLimits().maxScheduledActivities;
+    if (max === Infinity) return true;
+    try {
+      const snap = await getDocs(query(collection(db, 'activities'), where('userId', '==', userId)));
+      const active = snap.docs.filter((d) => d.data().completed !== true).length;
+      if (active + newCount > max) {
+        promptUpgrade('maxScheduledActivities', navigation);
+        return false;
+      }
+    } catch (e) {
+      console.error('Schedule limit check failed:', e);
+    }
+    return true;
+  };
+
+  // Provider-search cap: counted server-side (users can't edit the counter). Fails open on network errors.
+  const checkAndRecordSearch = async (navigation) => {
+    try {
+      const res = await httpsCallable(functions, 'recordProviderSearch')();
+      if (res.data && res.data.allowed === false) {
+        promptUpgrade('maxProviderSearches', navigation);
+        return false;
+      }
+    } catch (e) {
+      console.error('Search limit check failed:', e);
+    }
+    return true;
+  };
+
+  const startAddChild = async (navigation) => {
+    if (await checkCanAddChild(navigation)) navigation.navigate('AddGoal', { mode: 'newChild' });
+  };
+
+  const startAddGoal = (child, navigation) => {
+    if (checkCanAddGoal(child, navigation)) navigation.navigate('AddGoal', { child, mode: 'addGoal' });
   };
 
   const value = {
@@ -326,23 +337,129 @@ export function SubscriptionProvider({ children }) {
     tier: subscription?.tier || SUBSCRIPTION_TIERS.FREE,
     isActive: subscription?.status === 'active',
     isFree: subscription?.tier === SUBSCRIPTION_TIERS.FREE,
-    isStarter: subscription?.tier === SUBSCRIPTION_TIERS.STARTER,
     isFamily: subscription?.tier === SUBSCRIPTION_TIERS.FAMILY,
-    isPremium: subscription?.tier === SUBSCRIPTION_TIERS.PREMIUM,
     limits: getLimits(),
     canAddChild,
     canScheduleActivity,
     canSearchProviders,
     hasFeature,
-    updateSubscriptionTier,
     incrementUsage,
     decrementUsage,
-    getUpgradeMessage
+    getUpgradeMessage,
+    promptUpgrade,
+    checkCanAddChild,
+    checkCanAddGoal,
+    startAddChild,
+    startAddGoal,
+    checkCanSchedule,
+    checkAndRecordSearch
   };
 
   return (
     <SubscriptionContext.Provider value={value}>
       {children}
+      <VerifyEmailModal visible={verifyOpen} onClose={() => setVerifyOpen(false)} />
     </SubscriptionContext.Provider>
   );
 }
+
+function VerifyEmailModal({ visible, onClose }) {
+  const [code, setCode] = useState('');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const sentFor = useRef(false);
+
+  const send = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      const res = await httpsCallable(functions, 'sendVerificationCode')();
+      if (res.data && res.data.verified) {
+        await auth.currentUser?.reload();
+        setDone(true);
+      } else {
+        setMessage(`We emailed a 6-digit code to ${auth.currentUser?.email}. It can take a minute; check your spam folder too.`);
+      }
+    } catch (e) {
+      setMessage(e?.message?.replace(/^.*?:\s*/, '') || 'Could not send the code. Please try again.');
+    }
+    setBusy(false);
+  };
+
+  useEffect(() => {
+    if (visible && !sentFor.current) { sentFor.current = true; setCode(''); setDone(false); send(); }
+    if (!visible) sentFor.current = false;
+  }, [visible]);
+
+  const confirm = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      await httpsCallable(functions, 'confirmVerificationCode')({ code });
+      await auth.currentUser?.getIdToken(true);
+      await auth.currentUser?.reload();
+      setDone(true);
+    } catch (e) {
+      setMessage(e?.message?.replace(/^.*?:\s*/, '') || 'Could not verify. Please try again.');
+    }
+    setBusy(false);
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={vs.backdrop}>
+        <View style={vs.card}>
+          <Text style={vs.title}>{done ? 'Email verified' : 'Verify your email'}</Text>
+          {done ? (
+            <>
+              <Text style={vs.body}>You're all set. Tap Add Child again to continue.</Text>
+              <TouchableOpacity style={vs.primary} onPress={onClose}><Text style={vs.primaryText}>Continue</Text></TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={vs.body}>Enter the 6-digit code we emailed to {auth.currentUser?.email}.</Text>
+              <TextInput
+                style={vs.input}
+                value={code}
+                onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
+                keyboardType="number-pad"
+                placeholder="123456"
+                maxLength={6}
+                autoFocus
+              />
+              {!!message && <Text style={vs.msg}>{message}</Text>}
+              <TouchableOpacity
+                style={[vs.primary, (busy || code.length !== 6) && vs.disabled]}
+                disabled={busy || code.length !== 6}
+                onPress={confirm}
+              >
+                <Text style={vs.primaryText}>{busy ? 'Please wait...' : 'Verify'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={vs.secondary} disabled={busy} onPress={send}>
+                <Text style={vs.secondaryText}>Resend code</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={vs.secondary} onPress={onClose}>
+                <Text style={vs.secondaryText}>Not now</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const vs = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 400 },
+  title: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 8 },
+  body: { fontSize: 15, color: '#4B5563', marginBottom: 16, lineHeight: 21 },
+  input: { borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10, padding: 14, fontSize: 24, letterSpacing: 8, textAlign: 'center', color: '#111827', marginBottom: 12 },
+  msg: { fontSize: 13, color: '#6B7280', marginBottom: 12, lineHeight: 18 },
+  primary: { backgroundColor: '#8B3CE0', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 8 },
+  primaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  disabled: { opacity: 0.5 },
+  secondary: { padding: 10, alignItems: 'center' },
+  secondaryText: { color: '#6B21A8', fontSize: 15, fontWeight: '600' }
+});

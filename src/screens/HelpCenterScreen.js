@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
+import { showAlert } from '../utils/crossAlert';
 
 export default function HelpCenterScreen({ navigation }) {
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -44,7 +45,7 @@ export default function HelpCenterScreen({ navigation }) {
   };
 
   const contactSupport = () => {
-    Alert.alert(
+    showAlert(
       'Contact Support',
       'Choose how you\'d like to reach us:',
       [

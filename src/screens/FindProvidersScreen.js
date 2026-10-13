@@ -3,13 +3,16 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIn
 import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import { showAlert } from '../utils/crossAlert';
+import { useSubscription } from '../context/SubscriptionContext';
 
 // Google Places API Key
-const GOOGLE_PLACES_API_KEY = 'AIzaSyCT1SFLbopxwltuUeIGGYvyI6baSygI0qw';
+import { GOOGLE_PLACES_API_KEY as LOCAL_KEY } from '../config.local';
+const GOOGLE_PLACES_API_KEY = LOCAL_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
 export default function FindProvidersScreen({ route, navigation }) {
   const { child: routeChild, goal: routeGoal, activity: routeActivity } = route.params || {};
+  const { checkCanSchedule, checkAndRecordSearch } = useSubscription();
   
   const [child, setChild] = useState(routeChild || null);
   const [goal, setGoal] = useState(routeGoal || '');
@@ -47,12 +50,12 @@ export default function FindProvidersScreen({ route, navigation }) {
 
   const handleStartSearch = () => {
     if (!child || !activity.trim()) {
-      Alert.alert('Missing Information', 'Please select a child and enter an activity to search for.');
+      showAlert('Missing Information', 'Please select a child and enter an activity to search for.');
       return;
     }
     setShowSetup(false);
     setLoading(true);
-    loadUserLocationAndSearch();
+    // the showSetup effect below runs the search
   };
 
   useEffect(() => {
@@ -74,111 +77,160 @@ export default function FindProvidersScreen({ route, navigation }) {
       
       if (savedLocation) {
         const locationData = JSON.parse(savedLocation);
-        console.log('ðŸ“ Loaded location:', locationData);
         setUserLocation(locationData);
         await searchNearbyProviders(locationData);
       } else {
         setLoading(false);
-        Alert.alert(
+        showAlert(
           'Location Not Set',
           'Please set your location in Settings to find nearby activities.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Go to Settings', onPress: () => navigation.navigate('Settings') }
+           { text: 'Go to Settings', onPress: () => navigation.navigate('Home', { screen: 'Settings' }) }
           ]
         );
       }
     } catch (error) {
-      console.error('âŒ Error loading location:', error);
+      console.error('\u274C Error loading location:', error);
       setLoading(false);
-      Alert.alert('Error', 'Failed to load your location. Please try again.');
+      showAlert('Error', 'Failed to load your location. Please try again.');
     }
   };
 
   const searchNearbyProviders = async (location) => {
     setLoading(true);
 
+    // Free plan: 5 searches a month (counted server-side)
+    if (!(await checkAndRecordSearch(navigation))) {
+      setProviders([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { latitude, longitude } = location;
-      
+
       // Build precise, literal search query
-      const searchQuery = buildPreciseSearchQuery(activity);
-      
-      console.log('ðŸ” Activity:', activity);
-      console.log('ðŸŽ¯ Goal (context only):', goal);
-      console.log('ðŸ”Ž Search query:', searchQuery);
-      console.log('ðŸ“ At location:', latitude, longitude);
+      const searchQuery = buildRelevantQuery(activity, goal);
+      const topic = extractTopic(goal);
 
-      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&location=${latitude},${longitude}&radius=30000&key=${GOOGLE_PLACES_API_KEY}`;
-      
-      console.log('ðŸŒ Calling Google Places API...');
 
-      const response = await axios.get(url);
-      
-      console.log('ðŸ“¥ API Status:', response.data.status);
-      console.log('ðŸ“Š Results count:', response.data.results?.length || 0);
+      // Places API (New): works from browsers (CORS) and native.
+      const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask': [
+            'places.id',
+            'places.displayName',
+            'places.formattedAddress',
+            'places.rating',
+            'places.userRatingCount',
+            'places.location',
+            'places.currentOpeningHours.openNow',
+            'places.websiteUri',
+            'places.primaryType',
+            'places.types'
+          ].join(',')
+        },
+        body: JSON.stringify({
+          textQuery: searchQuery,
+          maxResultCount: 20,
+          locationBias: {
+            circle: { center: { latitude, longitude }, radius: 30000 }
+          }
+        })
+      });
 
-      if (response.data.status === 'OK' && response.data.results && response.data.results.length > 0) {
-        const formattedProviders = response.data.results.slice(0, 15).map(place => {
-          const distance = calculateDistance(
-            latitude,
-            longitude,
-            place.geometry.location.lat,
-            place.geometry.location.lng
-          );
+      const data = await response.json();
 
-          return {
-            id: place.place_id,
-            name: place.name,
-            address: place.formatted_address || 'Address not available',
-            rating: place.rating || 0,
-            totalRatings: place.user_ratings_total || 0,
-            distance: distance.text,
-            distanceValue: distance.value,
-            latitude: place.geometry.location.lat,
-            longitude: place.geometry.location.lng,
-            isOpen: place.opening_hours?.open_now
-          };
-        });
-
-        formattedProviders.sort((a, b) => a.distanceValue - b.distanceValue);
-        
-        setProviders(formattedProviders);
-        console.log('âœ… Found', formattedProviders.length, 'providers for:', activity);
-      } else if (response.data.status === 'ZERO_RESULTS') {
-        console.log('âš ï¸ No results found for:', activity);
+      if (!response.ok) {
+        const msg = data?.error?.message || `HTTP ${response.status}`;
+        console.error('Places API error:', response.status, msg);
         setProviders([]);
-        Alert.alert(
+        showAlert('Search Error', `Google Places returned an error: ${msg}`);
+        return;
+      }
+
+      const places = data.places || [];
+
+      if (places.length > 0) {
+        const formattedProviders = places
+          .filter((place) => place.location)
+          .map((place) => {
+            const distance = calculateDistance(
+              latitude,
+              longitude,
+              place.location.latitude,
+              place.location.longitude
+            );
+
+            return {
+              id: place.id,
+              name: place.displayName?.text || 'Unnamed place',
+              address: place.formattedAddress || 'Address not available',
+              rating: place.rating || 0,
+              totalRatings: place.userRatingCount || 0,
+              distance: distance.text,
+              distanceValue: distance.value,
+              latitude: place.location.latitude,
+              longitude: place.location.longitude,
+              isOpen: place.currentOpeningHours?.openNow,
+              website: place.websiteUri || null,
+              _types: [place.primaryType, ...(place.types || [])].filter(Boolean)
+            };
+          });
+
+        // Drop clearly off-topic place types (physio, clinics, golf, etc.)
+        // unless the activity or goal is itself health-related.
+        const healthy = /(health|physio|therap|medic|injur|rehab|doctor|dent|clinic|wellness|spa|massage)/i
+          .test(`${activity} ${goal}`);
+        const BAD = ['physiotherapist','doctor','hospital','dentist','health','medical_lab','spa','pharmacy','drugstore','golf_course','lodging','real_estate_agency','insurance_agency','lawyer','finance','bank','car_repair','store','restaurant','bar','cafe'];
+        let relevant = formattedProviders.filter((p) =>
+          healthy || !p._types.some((t) => BAD.includes(t) && t !== 'store' && t !== 'restaurant' && t !== 'cafe' && t !== 'bar')
+        );
+        if (topic && !/(golf)/.test(topic)) {
+          relevant = relevant.filter((p) => !/golf/i.test(p.name));
+        }
+        if (relevant.length === 0) relevant = formattedProviders;
+
+        // Topic matches first, then nearest.
+        const topicWords = topic ? topic.split(' ').filter((w) => w.length >= 4) : [];
+        const score = (p) => topicWords.some((w) => p.name.toLowerCase().includes(w)) ? 0 : 1;
+        relevant.sort((a, b) => score(a) - score(b) || a.distanceValue - b.distanceValue);
+        setProviders(relevant.slice(0, 15).map(({ _types, ...rest }) => rest));
+      } else {
+        setProviders([]);
+        showAlert(
           'No Results Found',
           `We couldn't find any "${activity}" providers within 30km of your location.\n\nTry a more general search term or check a different location.`
         );
-      } else if (response.data.status === 'REQUEST_DENIED') {
-        console.error('âŒ API request denied:', response.data.error_message);
-        Alert.alert(
-          'API Error',
-          `Google Places API error: ${response.data.error_message}\n\nPlease check your API key configuration.`
-        );
-        setProviders([]);
-      } else {
-        console.error('âŒ API error:', response.data.status, response.data.error_message);
-        setProviders([]);
-        Alert.alert('Error', `API returned: ${response.data.status}`);
       }
     } catch (error) {
-      console.error('âŒ Search error:', error);
-      console.error('âŒ Error details:', error.response?.data);
+      console.error('Search error:', error);
       setProviders([]);
-      
-      if (error.response) {
-        Alert.alert('API Error', `Status: ${error.response.status}\n${error.response.data?.error_message || 'Unknown error'}`);
-      } else if (error.request) {
-        Alert.alert('Network Error', 'Please check your internet connection and try again.');
-      } else {
-        Alert.alert('Error', error.message);
-      }
+      showAlert('Network Error', 'Could not reach the search service. Please check your internet connection and try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Pull the core subject out of a goal ("Play Basketball" -> "basketball")
+  const extractTopic = (g) => (g || '').toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/^\s*(i want to |to )?(learn how to|learn to|learn|play|become an?|become|be an?|be|get good at|master|improve at|improve my|improve|start|try|do)\s+/, '')
+    .replace(/\s+/g, ' ').trim();
+
+  // Combine goal + activity so generic activities ("Team Practice") stay on-topic
+  const buildRelevantQuery = (activityName, goalText) => {
+    const a = (activityName || '').toLowerCase().trim();
+    const topic = extractTopic(goalText);
+    if (!topic || a.includes(topic)) return buildPreciseSearchQuery(activityName);
+    if (/camp/.test(a)) return `${topic} camp for kids`;
+    if (/(lesson|class|course|workshop|coach|train|skill|drill|clinic|tutor|instruct)/.test(a)) return `${topic} lessons for kids`;
+    if (/(team|practice|club|league|game|join|scrimmage|tryout|match|program)/.test(a)) return `${topic} club for kids`;
+    return `${topic} ${a} for kids`;
   };
 
   const buildPreciseSearchQuery = (activityName) => {
@@ -405,8 +457,10 @@ export default function FindProvidersScreen({ route, navigation }) {
     };
   };
 
-  const openMaps = (provider) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${provider.latitude},${provider.longitude}`;
+  // Opens the provider's own website; falls back to their Google Maps listing if they have none.
+  const openWebsite = (provider) => {
+    const url = provider.website
+      || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(provider.name + ', ' + provider.address)}`;
     Linking.openURL(url);
   };
 
@@ -417,12 +471,12 @@ export default function FindProvidersScreen({ route, navigation }) {
 
   const confirmAddToCalendar = async () => {
     if (!selectedProvider || !selectedDate) {
-      Alert.alert('Error', 'Please select a date');
+      showAlert('Error', 'Please select a date');
       return;
     }
     
     if (!child || !child.id) {
-      Alert.alert('Error', 'Child information is missing');
+      showAlert('Error', 'Child information is missing');
       return;
     }
 
@@ -447,6 +501,11 @@ export default function FindProvidersScreen({ route, navigation }) {
           else if (recurrence === 'biweekly') currentDate.setDate(currentDate.getDate() + 14);
           else if (recurrence === 'monthly') currentDate.setMonth(currentDate.getMonth() + 1);
         }
+      }
+
+      if (!(await checkCanSchedule(dates.length, recurrence, navigation))) {
+        setShowDatePicker(false);
+        return;
       }
 
       await Promise.all(
@@ -475,9 +534,9 @@ export default function FindProvidersScreen({ route, navigation }) {
       setRecurrence('once');
       setRecurringUntil('');
 
-      Alert.alert('Success! ðŸŽ‰', `${dates.length} session(s) scheduled!`);
+      showAlert('Success! \uD83C\uDF89', `${dates.length} session(s) scheduled!`);
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
@@ -523,7 +582,7 @@ export default function FindProvidersScreen({ route, navigation }) {
                 >
                   <Text style={styles.childOptionAvatar}>{c.avatar}</Text>
                   <Text style={styles.childOptionName}>{c.name}</Text>
-                  {child?.id === c.id && <Text style={styles.checkmark}>✓</Text>}
+                  {child?.id === c.id && <Text style={styles.checkmark}>{"\u2713"}</Text>}
                 </TouchableOpacity>
               ))
             )}
@@ -538,7 +597,7 @@ export default function FindProvidersScreen({ route, navigation }) {
               onChangeText={setActivity}
             />
             <Text style={styles.helpText}>
-              💡 Be specific for better results (e.g., "swimming lessons" not just "swimming")
+              {"\uD83D\uDCA1"} Be specific for better results (e.g., "swimming lessons" not just "swimming")
             </Text>
           </View>
 
@@ -561,7 +620,7 @@ export default function FindProvidersScreen({ route, navigation }) {
             disabled={!child || !activity.trim()}
           >
             <Text style={styles.startSearchButtonText}>
-              🔍 Search for Providers
+              {"\uD83D\uDD0D"} Search for Providers
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -588,38 +647,38 @@ export default function FindProvidersScreen({ route, navigation }) {
         <Text style={styles.headerSubtitle}>{activity}</Text>
         <Text style={styles.headerGoal}>Goal: {goal}</Text>
         {userLocation && (
-          <Text style={styles.headerLocation}>ðŸ“ {userLocation.city || userLocation.address}</Text>
+          <Text style={styles.headerLocation}>{"\uD83D\uDCCD"} {userLocation.city || userLocation.address}</Text>
         )}
       </View>
 
       <View style={styles.infoBanner}>
         <Text style={styles.infoText}>
-          {providers.length > 0 ? `ðŸ” ${providers.length} providers within 30km` : 'ðŸ” Searching...'}
+          {providers.length > 0 ? `\uD83D\uDCCD ${providers.length} providers within 30km` : '\uD83D\uDD0D Searching...'}
         </Text>
         <TouchableOpacity onPress={retrySearch}>
-          <Text style={styles.refreshText}>ðŸ”„</Text>
+          <Text style={styles.refreshText}>{"\uD83D\uDD0D"}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         {providers.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>ðŸ”</Text>
+            <Text style={styles.emptyIcon}>{"\uD83D\uDCCD"}</Text>
             <Text style={styles.emptyTitle}>No Providers Found</Text>
             <Text style={styles.emptyText}>
               We couldn't find any "{activity}" providers within 30km of your location.
             </Text>
             <Text style={styles.emptySubtext}>Try:</Text>
-            <Text style={styles.emptyBullet}>â€¢ A more general search term</Text>
-            <Text style={styles.emptyBullet}>â€¢ Checking a different location</Text>
-            <Text style={styles.emptyBullet}>â€¢ Verifying your internet connection</Text>
+            <Text style={styles.emptyBullet}>{"\u2022"} A more general search term</Text>
+            <Text style={styles.emptyBullet}>{"\u2022"} Checking a different location</Text>
+            <Text style={styles.emptyBullet}>{"\u2022"} Verifying your internet connection</Text>
             
-            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Settings')}>
-              <Text style={styles.actionButtonText}>âš™ï¸ Update Location</Text>
+            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home', { screen: 'Settings' })}>
+              <Text style={styles.actionButtonText}>{"\u2699\uFE0F"} Update Location</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={[styles.actionButton, styles.retryButton]} onPress={retrySearch}>
-              <Text style={styles.actionButtonText}>ðŸ”„ Try Again</Text>
+              <Text style={styles.actionButtonText}>{"\uD83D\uDD04"} Try Again</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -632,26 +691,26 @@ export default function FindProvidersScreen({ route, navigation }) {
                 <View style={styles.providerInfo}>
                   <Text style={styles.providerName}>{provider.name}</Text>
                   {provider.isOpen !== undefined && (
-                    <Text style={styles.openStatus}>{provider.isOpen ? 'ðŸŸ¢ Open' : 'ðŸ”´ Closed'}</Text>
+                    <Text style={styles.openStatus}>{provider.isOpen ? '\uD83D\uDFE2 Open' : '\uD83D\uDD34 Closed'}</Text>
                   )}
                 </View>
               </View>
 
               {provider.rating > 0 && (
                 <Text style={styles.rating}>
-                  â­ {provider.rating.toFixed(1)} ({provider.totalRatings} reviews)
+                  {"\u2B50"} {provider.rating.toFixed(1)} ({provider.totalRatings} reviews)
                 </Text>
               )}
               
-              <Text style={styles.distance}>ðŸ“ {provider.distance}</Text>
+              <Text style={styles.distance}>{"\uD83D\uDCCD"} {provider.distance}</Text>
               <Text style={styles.address}>{provider.address}</Text>
 
               <View style={styles.actions}>
-                <TouchableOpacity style={[styles.actionBtn, styles.mapsBtn]} onPress={() => openMaps(provider)}>
-                  <Text style={styles.mapsBtnText}>ðŸ—ºï¸ Directions</Text>
+                <TouchableOpacity style={[styles.actionBtn, styles.mapsBtn]} onPress={() => openWebsite(provider)}>
+                  <Text style={styles.mapsBtnText}>{provider.website ? "\uD83C\uDF10 Website" : "\uD83D\uDDFA\uFE0F Map"}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.actionBtn, styles.scheduleBtn]} onPress={() => addToCalendar(provider)}>
-                  <Text style={styles.scheduleBtnText}>ðŸ“… Schedule</Text>
+                  <Text style={styles.scheduleBtnText}>{"\uD83D\uDCC5"} Schedule</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -780,4 +839,4 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 14, color: '#6B7280', marginBottom: 12 },
   addChildButton: { backgroundColor: '#9333EA', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   addChildButtonText: { color: 'white', fontSize: 14, fontWeight: '600' },
-});
+})

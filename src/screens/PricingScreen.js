@@ -1,86 +1,90 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking, Platform, ActivityIndicator } from 'react-native';
+import { httpsCallable } from 'firebase/functions';
 import { useSubscription, SUBSCRIPTION_TIERS, SUBSCRIPTION_PRICING } from '../context/SubscriptionContext';
+import { showAlert } from '../utils/crossAlert';
+import { auth, functions } from '../../firebase';
+
+// Stripe sandbox test mode. Set to false to use the live payment links below.
+const STRIPE_TEST_MODE = false;
+const TEST_LINKS = {
+  family: {
+    monthly: 'https://buy.stripe.com/test_4gMdR8a8V5SneIHcZx9k400', // sandbox 9.99/mo
+    annual: null
+  }
+};
 
 export default function PricingScreen({ navigation }) {
-  const { subscription, tier, updateSubscriptionTier } = useSubscription();
+  const { subscription, tier } = useSubscription();
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [openingPortal, setOpeningPortal] = useState(false);
 
-  const plans = [
-    {
-      id: SUBSCRIPTION_TIERS.STARTER,
-      name: 'Starter',
-      description: 'Perfect for 1 child',
-      monthlyPrice: 9.99,
-      annualPrice: 47.90,
-      features: [
-        '1 child profile',
-        '20 provider searches/month',
-        'Up to 30 scheduled activities',
-        'Basic progress tracking',
-        '99% AI activity matching',
-        'Email support (48hr)',
-      ],
-      disabledFeatures: [
-        'Recurring schedules',
-        'Advanced analytics'
-      ],
-      stripeLinks: {
-        monthly: 'https://buy.stripe.com/4gMdR8a8V5SneIHcZx9k400',
-        annual: 'https://buy.stripe.com/9B6aEWepba8DeIH7Fd9k401'
+  // Opens Stripe's hosted page where the customer can cancel or update billing
+  const handleManageSubscription = async () => {
+    setOpeningPortal(true);
+    try {
+      const returnOrigin = Platform.OS === 'web' ? window.location.origin : undefined;
+      const call = httpsCallable(functions, 'createPortalSession');
+      const result = await call({ returnOrigin });
+      const url = result.data && result.data.url;
+      if (!url) throw new Error('No billing link returned');
+      if (Platform.OS === 'web') {
+        window.location.href = url;
+      } else {
+        await Linking.openURL(url);
       }
-    },
+    } catch (error) {
+      showAlert('Could not open billing', (error && error.message) || 'Please try again in a moment.');
+    } finally {
+      setOpeningPortal(false);
+    }
+  };
+
+  // Launch lineup: Free (1 child) + one paid plan.
+  // Live Stripe payment links: 9.99/mo and 101.90/yr (CAD).
+  const plans = [
     {
       id: SUBSCRIPTION_TIERS.FAMILY,
       name: 'Family',
-      description: 'Perfect for 2+ children',
-      monthlyPrice: 19.99,
-      annualPrice: 95.90,
+      description: 'For 2+ children, or no limits for one',
+      monthlyPrice: 9.99,
+      annualPrice: 101.90,
       popular: true,
       features: [
         'Unlimited child profiles',
+        'Unlimited goals per child',
         'Unlimited provider searches',
         'Unlimited scheduled activities',
-        'Advanced progress analytics',
         'Recurring schedules',
+        'Advanced progress analytics',
         'Calendar export (Google/Apple)',
-        'Family sharing',
         'Priority support (24hr)',
       ],
       disabledFeatures: [],
       stripeLinks: {
-        monthly: 'https://buy.stripe.com/00w7sKbcZ3KffML7Fd9k402',
-        annual: 'https://buy.stripe.com/6oU9ASgxj2GbgQP9Nl9k403'
-      }
-    },
-    {
-      id: SUBSCRIPTION_TIERS.PREMIUM,
-      name: 'Premium',
-      description: 'Perfect for power users',
-      monthlyPrice: 29.99,
-      annualPrice: 191.90,
-      features: [
-        'Everything in Family, plus:',
-        'AI-powered recommendations',
-        'Bulk scheduling (10+ at once)',
-        'Provider comparison tools',
-        'Cost & time tracking',
-        'Smart notifications',
-        'Priority support (8hr)',
-        'Early access to new features',
-      ],
-      disabledFeatures: [],
-      stripeLinks: {
-        monthly: 'https://buy.stripe.com/eVq00i2Gt0y32ZZbVt9k405',
-        annual: 'https://buy.stripe.com/00w00i6WJdkP2ZZ3oX9k406'
+        monthly: 'https://buy.stripe.com/fZuaEW80N6WrcAzgbJ9k407',
+        annual: 'https://buy.stripe.com/4gMeVc5SF6Wrasrf7F9k408'
       }
     }
   ];
 
   const handleSelectPlan = async (plan) => {
-    const stripeUrl = plan.stripeLinks[billingCycle];
+    const baseLink = STRIPE_TEST_MODE
+      ? (TEST_LINKS[plan.id] && TEST_LINKS[plan.id][billingCycle])
+      : plan.stripeLinks[billingCycle];
+    if (!baseLink) {
+      showAlert('Coming soon', 'Subscriptions are opening shortly. Thanks for your patience!');
+      return;
+    }
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      showAlert('Sign in required', 'Please sign in before choosing a plan.');
+      return;
+    }
+    // client_reference_id lets the Stripe webhook credit the right account
+    const stripeUrl = `${baseLink}?client_reference_id=${uid}__${plan.id}__${billingCycle}`;
     
-    Alert.alert(
+    showAlert(
       'Subscribe to ' + plan.name,
       `You'll be redirected to Stripe to complete your ${billingCycle} subscription for $${billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice}${billingCycle === 'monthly' ? '/mo' : '/yr'}`,
       [
@@ -94,10 +98,10 @@ export default function PricingScreen({ navigation }) {
               if (supported) {
                 await Linking.openURL(stripeUrl);
               } else {
-                Alert.alert('Error', 'Unable to open payment page');
+                showAlert('Error', 'Unable to open payment page');
               }
             } catch (error) {
-              Alert.alert('Error', 'Failed to open payment page');
+              showAlert('Error', 'Failed to open payment page');
             }
           }
         }
@@ -105,34 +109,12 @@ export default function PricingScreen({ navigation }) {
     );
   };
 
-  // For testing purposes - simulate upgrade without payment
-  const handleTestUpgrade = async (planId) => {
-    Alert.alert(
-      'Test Upgrade',
-      'This will simulate upgrading your account without payment (for testing only)',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Upgrade (Test)',
-          onPress: async () => {
-            try {
-              await updateSubscriptionTier(planId, billingCycle);
-              Alert.alert('Success', 'Your plan has been updated!');
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert('Error', error.message);
-            }
-          }
-        }
-      ]
-    );
-  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Choose Your Plan</Text>
-        <Text style={styles.subtitle}>30-day money-back guarantee</Text>
+        <Text style={styles.subtitle}>Simple pricing. Cancel anytime.</Text>
       </View>
 
       {/* Billing Toggle */}
@@ -153,7 +135,7 @@ export default function PricingScreen({ navigation }) {
             Annual
           </Text>
           <View style={styles.saveBadge}>
-            <Text style={styles.saveBadgeText}>SAVE 20%</Text>
+            <Text style={styles.saveBadgeText}>SAVE 15%</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -197,14 +179,26 @@ export default function PricingScreen({ navigation }) {
             </View>
 
             {tier === plan.id ? (
-              <View style={styles.currentPlanButton}>
-                <Text style={styles.currentPlanText}>Current Plan</Text>
+              <View>
+                <View style={styles.currentPlanButton}>
+                  <Text style={styles.currentPlanText}>Current Plan</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.selectButton, { marginTop: 10 }]}
+                  onPress={handleManageSubscription}
+                  disabled={openingPortal}
+                >
+                  {openingPortal ? (
+                    <ActivityIndicator />
+                  ) : (
+                    <Text style={styles.selectButtonText}>Manage or cancel subscription</Text>
+                  )}
+                </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
                 style={[styles.selectButton, plan.popular && styles.selectButtonPopular]}
                 onPress={() => handleSelectPlan(plan)}
-                onLongPress={() => handleTestUpgrade(plan.id)} // Long press for test upgrade
               >
                 <Text style={[styles.selectButtonText, plan.popular && styles.selectButtonTextPopular]}>
                   Select Plan →
@@ -212,7 +206,6 @@ export default function PricingScreen({ navigation }) {
               </TouchableOpacity>
             )}
 
-            <Text style={styles.guarantee}>30-day money-back guarantee</Text>
           </View>
         ))}
 
@@ -242,9 +235,6 @@ export default function PricingScreen({ navigation }) {
           </View>
         </View>
 
-        <View style={styles.testNote}>
-          <Text style={styles.testNoteText}>💡 Testing Tip: Long-press "Select Plan" to simulate upgrade without payment</Text>
-        </View>
       </ScrollView>
     </View>
   );

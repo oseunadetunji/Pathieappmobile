@@ -3,11 +3,11 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'r
 
 export default function PrivacyScreen({ navigation }) {
   const openPrivacyPolicy = () => {
-    Linking.openURL('https://www.pathieapp.com/privacy-policy');
+    Linking.openURL('https://pathieapp.com/privacy.html');
   };
 
   const openTermsOfUse = () => {
-    Linking.openURL('https://www.pathieapp.com/terms-of-use');
+    Linking.openURL('https://pathieapp.com/terms.html');
   };
 
   return (

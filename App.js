@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { auth } from './firebase';
 import AppNavigator from './src/navigation/AppNavigator';
 import { SubscriptionProvider } from './src/context/SubscriptionContext';
 import * as Notifications from 'expo-notifications';
+import { AlertHost } from './src/utils/crossAlert';
 
 // Configure notifications
 Notifications.setNotificationHandler({
@@ -13,6 +15,17 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 });
+
+// Web only: pin the app to the visible viewport so the bottom tab bar stays on
+// screen on mobile browsers (otherwise the page grows with its content and the
+// tab bar ends up below the fold). 100dvh tracks the browser toolbar on phones.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent =
+    'html,body{height:100%;overflow:hidden;overscroll-behavior:none}' +
+    '#root{height:100%;height:100dvh;display:flex;flex-direction:column}';
+  document.head.appendChild(style);
+}
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -59,6 +72,7 @@ export default function App() {
     <SubscriptionProvider>
       <StatusBar style="light" />
       <AppNavigator user={user} />
+      <AlertHost />
     </SubscriptionProvider>
   );
 }
