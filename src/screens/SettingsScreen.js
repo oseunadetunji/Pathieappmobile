@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'rea
 import { auth } from '../../firebase';
 import { useSubscription } from '../context/SubscriptionContext';
 import { showAlert } from '../utils/crossAlert';
+import HeaderBack from '../components/HeaderBack';
 
 export default function SettingsScreen({ navigation }) {
   const { tier, subscription } = useSubscription();
@@ -110,6 +111,7 @@ export default function SettingsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.title}>Settings</Text>
         <Text style={styles.subtitle}>Manage your account and preferences</Text>
       </View>

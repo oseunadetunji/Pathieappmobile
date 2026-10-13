@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert,
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { geocodeSearch, reverseLookup, getDeviceCoords } from '../utils/geocode';
 import { showAlert } from '../utils/crossAlert';
+import HeaderBack from '../components/HeaderBack';
 
 export default function LocationSettingsScreen({ navigation }) {
   const [location, setLocation] = useState(null);
@@ -249,6 +250,7 @@ export default function LocationSettingsScreen({ navigation }) {
       keyboardVerticalOffset={100}
     >
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.title}>Location Settings</Text>
         <Text style={styles.subtitle}>Set your location to find nearby activities</Text>
       </View>
@@ -391,7 +393,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#9333EA',
     padding: 24,
-    paddingTop: 40,
+    paddingTop: 60,
     paddingBottom: 24,
   },
   title: {

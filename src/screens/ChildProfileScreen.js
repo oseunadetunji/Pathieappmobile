@@ -4,6 +4,7 @@ import { doc, onSnapshot, updateDoc, collection, query, where, getDocs, deleteDo
 import { auth, db } from '../../firebase';
 import { showAlert } from '../utils/crossAlert';
 import { useSubscription } from '../context/SubscriptionContext';
+import HeaderBack from '../components/HeaderBack';
 
 export default function ChildProfileScreen({ route, navigation }) {
   const { child } = route.params;
@@ -121,6 +122,7 @@ export default function ChildProfileScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.avatar}>{currentChild.avatar}</Text>
         <View>
           <Text style={styles.name}>{currentChild.name}</Text>
@@ -193,6 +195,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#9333EA',
     padding: 24,
+    paddingTop: 60,
     flexDirection: 'row',
     alignItems: 'center',
   },

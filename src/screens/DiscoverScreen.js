@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { activityDatabase } from '../data/activityDatabase';
 import { showAlert } from '../utils/crossAlert';
+import HeaderBack from '../components/HeaderBack';
 
 export default function DiscoverScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,6 +115,7 @@ export default function DiscoverScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.title}>Discover</Text>
         <Text style={styles.subtitle}>Find activities for your child's goals</Text>
       </View>

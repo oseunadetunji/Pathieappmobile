@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import HeaderBack from '../components/HeaderBack';
 
 export default function PrivacyScreen({ navigation }) {
   const openPrivacyPolicy = () => {
@@ -15,6 +16,7 @@ export default function PrivacyScreen({ navigation }) {
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
+        <HeaderBack />
           <Text style={styles.headerIcon}>🔒</Text>
           <Text style={styles.headerTitle}>Privacy & Security</Text>
           <Text style={styles.headerSubtitle}>
@@ -121,6 +123,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#9333EA',
     padding: 24,
+    paddingTop: 60,
     alignItems: 'center',
   },
   headerIcon: {

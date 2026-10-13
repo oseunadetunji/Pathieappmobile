@@ -5,6 +5,7 @@ import { auth, db } from '../../firebase';
 import { getGoalMatch, getPlanForCategory, CATEGORY_LABELS } from '../data/activityDatabase';
 import { showAlert } from '../utils/crossAlert';
 import { useSubscription } from '../context/SubscriptionContext';
+import HeaderBack from '../components/HeaderBack';
 
 export default function ActivityPlanScreen({ route, navigation }) {
   const { child, goal } = route.params;
@@ -224,6 +225,7 @@ export default function ActivityPlanScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.headerTitle}>Activity Plan</Text>
         <Text style={styles.headerSubtitle}>
           {child.name}, Age {child.age} - {goal}
@@ -537,6 +539,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#9333EA',
     padding: 24,
+    paddingTop: 60,
   },
   headerTitle: {
     fontSize: 24,

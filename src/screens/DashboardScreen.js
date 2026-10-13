@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { auth, db } from '../../firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import HeaderBack from '../components/HeaderBack';
 
 export default function DashboardScreen({ navigation }) {
   const [children, setChildren] = useState([]);
@@ -60,6 +61,7 @@ export default function DashboardScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.greeting}>Welcome back! {"\uD83D\uDC4B"}</Text>
         <Text style={styles.subtitle}>Here's your family's progress</Text>
       </View>

@@ -8,6 +8,7 @@ import { useSubscription } from '../context/SubscriptionContext';
 
 // Google Places API Key
 import { GOOGLE_PLACES_API_KEY as LOCAL_KEY } from '../config.local';
+import HeaderBack from '../components/HeaderBack';
 const GOOGLE_PLACES_API_KEY = LOCAL_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
 export default function FindProvidersScreen({ route, navigation }) {
@@ -553,6 +554,7 @@ export default function FindProvidersScreen({ route, navigation }) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
+        <HeaderBack />
           <Text style={styles.headerTitle}>Find Activities</Text>
           <Text style={styles.headerSubtitle}>Select child and activity to search</Text>
         </View>
@@ -643,6 +645,7 @@ export default function FindProvidersScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.headerTitle}>Find Activities</Text>
         <Text style={styles.headerSubtitle}>{activity}</Text>
         <Text style={styles.headerGoal}>Goal: {goal}</Text>
@@ -771,7 +774,7 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F3F4F6', padding: 24 },
   loadingText: { marginTop: 16, color: '#6B7280', fontSize: 16, fontWeight: '600' },
   loadingSubtext: { marginTop: 8, color: '#9CA3AF', fontSize: 14 },
-  header: { backgroundColor: '#9333EA', padding: 24, paddingBottom: 16 },
+  header: { backgroundColor: '#9333EA', padding: 24, paddingTop: 60, paddingBottom: 16 },
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: 'white' },
   headerSubtitle: { fontSize: 16, color: '#F3E8FF', marginTop: 4, fontWeight: '600' },
   headerGoal: { fontSize: 12, color: '#E9D5FF', marginTop: 2 },

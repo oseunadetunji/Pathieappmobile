@@ -67,14 +67,14 @@ function SettingsNavigator() {
     >
       <SettingsStack.Screen name="SettingsHome" component={SettingsScreen} options={{ headerShown: false }} />
       <SettingsStack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: 'Profile Settings' }} />
-      <SettingsStack.Screen name="Pricing" component={PricingScreen} options={{ title: 'Choose Your Plan' }} />
-      <SettingsStack.Screen name="ManageAccount" component={ManageAccountScreen} options={{ title: 'Manage Account' }} />
+      <SettingsStack.Screen name="Pricing" component={PricingScreen} options={{ title: 'Choose Your Plan', headerShown: false }} />
+      <SettingsStack.Screen name="ManageAccount" component={ManageAccountScreen} options={{ title: 'Manage Account', headerShown: false }} />
       <SettingsStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} options={{ title: 'Notification Settings' }} />
-      <SettingsStack.Screen name="LocationSettings" component={LocationSettingsScreen} options={{ title: 'Location Settings' }} />
-      <SettingsStack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Privacy & Security' }} />
-      <SettingsStack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ title: 'Help Center' }} />
+      <SettingsStack.Screen name="LocationSettings" component={LocationSettingsScreen} options={{ title: 'Location Settings', headerShown: false }} />
+      <SettingsStack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Privacy & Security', headerShown: false }} />
+      <SettingsStack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ title: 'Help Center', headerShown: false }} />
       <SettingsStack.Screen name="Feedback" component={FeedbackScreen} options={{ title: 'Send Feedback' }} />
-      <SettingsStack.Screen name="About" component={AboutScreen} options={{ title: 'About' }} />
+      <SettingsStack.Screen name="About" component={AboutScreen} options={{ title: 'About', headerShown: false }} />
     </SettingsStack.Navigator>
   );
 }
@@ -105,24 +105,20 @@ function BackBar({ onPress }) {
   );
 }
 
-const mainTab = (icon, label, { settings = false } = {}) => ({ navigation, route }) => ({
-  headerShown: true,
-  header: () => {
-    // On the Settings tab, its own sub-screens already show a Back button
-    if (settings) {
-      const inner = getFocusedRouteNameFromRoute(route);
-      if (inner && inner !== 'SettingsHome') return null;
-    }
-    return navigation.canGoBack() ? <BackBar onPress={() => navigation.goBack()} /> : null;
-  },
+const mainTab = (icon, label, { slimBack = false } = {}) => ({ navigation }) => ({
+  // Screens with their own purple header render the Back button inside it (HeaderBack).
+  // Only screens without one (Calendar) get the slim bar.
+  headerShown: slimBack,
+  header: () => (navigation.canGoBack() ? <BackBar onPress={() => navigation.goBack()} /> : null),
   tabBarIcon: ({ focused }) => <TabBarIcon icon={icon} label={label} focused={focused} />,
 });
 
 // Detail screens registered as hidden tabs: they open inside the tab navigator so the
 // bottom tab bar stays visible, but have no tab button of their own.
-const detailScreen = (title) => ({ navigation }) => ({
+const detailScreen = (title, { ownHeader = false } = {}) => ({ navigation }) => ({
   title,
-  headerShown: true,
+  // ownHeader: the screen draws its own purple header with a HeaderBack inside it
+  headerShown: !ownHeader,
   headerStyle: { backgroundColor: '#9333EA' },
   headerTintColor: '#fff',
   headerTitleStyle: { fontWeight: 'bold' },
@@ -177,18 +173,18 @@ function Home() {
       <Tab.Screen 
         name="Calendar" 
         component={CalendarScreen}
-        options={mainTab('📅', 'Calendar')}
+        options={mainTab('📅', 'Calendar', { slimBack: true })}
       />
       <Tab.Screen 
         name="Settings" 
         component={SettingsNavigator}
-        options={mainTab('⚙️', 'Settings', { settings: true })}
+        options={mainTab('⚙️', 'Settings')}
       />
-      <Tab.Screen name="ChildProfile" component={ChildProfileScreen} options={detailScreen('Child Profile')} />
+      <Tab.Screen name="ChildProfile" component={ChildProfileScreen} options={detailScreen('Child Profile', { ownHeader: true })} />
       <Tab.Screen name="AddGoal" component={AddGoalScreen} options={detailScreen('Add Goal')} />
-      <Tab.Screen name="ActivityPlan" component={ActivityPlanScreen} options={detailScreen('Activity Plan')} />
-      <Tab.Screen name="FindProviders" component={FindProvidersScreen} options={detailScreen('Find Activities')} />
-      <Tab.Screen name="Pricing" component={PricingScreen} options={detailScreen('Choose Your Plan')} />
+      <Tab.Screen name="ActivityPlan" component={ActivityPlanScreen} options={detailScreen('Activity Plan', { ownHeader: true })} />
+      <Tab.Screen name="FindProviders" component={FindProvidersScreen} options={detailScreen('Find Activities', { ownHeader: true })} />
+      <Tab.Screen name="Pricing" component={PricingScreen} options={detailScreen('Choose Your Plan', { ownHeader: true })} />
     </Tab.Navigator>
   );
 }

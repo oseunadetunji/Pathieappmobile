@@ -4,6 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { useSubscription, SUBSCRIPTION_TIERS, SUBSCRIPTION_PRICING } from '../context/SubscriptionContext';
 import { showAlert } from '../utils/crossAlert';
 import { auth, functions } from '../../firebase';
+import HeaderBack from '../components/HeaderBack';
 
 // Stripe sandbox test mode. Set to false to use the live payment links below.
 const STRIPE_TEST_MODE = false;
@@ -113,6 +114,7 @@ export default function PricingScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.title}>Choose Your Plan</Text>
         <Text style={styles.subtitle}>Simple pricing. Cancel anytime.</Text>
       </View>

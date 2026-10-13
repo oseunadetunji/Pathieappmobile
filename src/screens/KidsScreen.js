@@ -4,6 +4,7 @@ import { collection, query, onSnapshot, where, addDoc, deleteDoc, doc, getDocs }
 import { auth, db } from '../../firebase';
 import { showAlert } from '../utils/crossAlert';
 import { useSubscription } from '../context/SubscriptionContext';
+import HeaderBack from '../components/HeaderBack';
 
 export default function KidsScreen({ navigation }) {
   const { startAddChild } = useSubscription();
@@ -136,6 +137,7 @@ export default function KidsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <HeaderBack />
         <Text style={styles.title}>My Children</Text>
         <Text style={styles.subtitle}>Manage your children and their goals</Text>
       </View>

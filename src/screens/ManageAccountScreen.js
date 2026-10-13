@@ -6,6 +6,7 @@ import { useSubscription } from '../context/SubscriptionContext';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { signOut, deleteUser } from 'firebase/auth';
 import { showAlert } from '../utils/crossAlert';
+import HeaderBack from '../components/HeaderBack';
 
 export default function ManageAccountScreen({ navigation }) {
   const { isFamily } = useSubscription();
@@ -170,6 +171,7 @@ export default function ManageAccountScreen({ navigation }) {
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
+        <HeaderBack />
           <Text style={styles.headerIcon}>⚙️</Text>
           <Text style={styles.headerTitle}>Manage Account</Text>
           <Text style={styles.headerSubtitle}>
@@ -247,6 +249,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#9333EA',
     padding: 24,
+    paddingTop: 60,
     alignItems: 'center',
   },
   headerIcon: {

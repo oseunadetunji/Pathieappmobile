@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import HeaderBack from '../components/HeaderBack';
 
 export default function AboutScreen({ navigation }) {
   const appVersion = '1.0.0';
@@ -22,6 +23,7 @@ export default function AboutScreen({ navigation }) {
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* App Logo/Icon */}
         <View style={styles.header}>
+        <HeaderBack />
           <View style={styles.appIcon}>
             <Text style={styles.appIconText}>🎯</Text>
           </View>
@@ -113,6 +115,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#9333EA',
     padding: 40,
+    paddingTop: 60,
     alignItems: 'center',
   },
   appIcon: {

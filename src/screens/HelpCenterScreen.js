@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
 import { showAlert } from '../utils/crossAlert';
+import HeaderBack from '../components/HeaderBack';
 
 export default function HelpCenterScreen({ navigation }) {
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -66,6 +67,7 @@ export default function HelpCenterScreen({ navigation }) {
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
+        <HeaderBack />
           <Text style={styles.headerIcon}>❓</Text>
           <Text style={styles.headerTitle}>Help Center</Text>
           <Text style={styles.headerSubtitle}>
@@ -135,6 +137,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#9333EA',
     padding: 24,
+    paddingTop: 60,
     alignItems: 'center',
   },
   headerIcon: {
