@@ -16,7 +16,11 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswor
 import { showAlert } from '../utils/crossAlert';
 
 export default function AuthScreen() {
-  const [isLogin, setIsLogin] = useState(true);
+  // The marketing site's "Get started" buttons open app.pathieapp.com/?mode=signup
+  const startsAsSignUp = Platform.OS === 'web' && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('mode') === 'signup';
+  const [isLogin, setIsLogin] = useState(!startsAsSignUp);
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -119,14 +123,22 @@ export default function AuthScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder={isLogin ? 'Password' : 'Password (at least 6 characters)'}
             placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
             autoCapitalize="none"
-            autoComplete="password"
+            autoComplete={isLogin ? 'current-password' : 'new-password'}
           />
+          <TouchableOpacity
+            style={styles.showPasswordButton}
+            onPress={() => setShowPassword(!showPassword)}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+          >
+            <Text style={styles.showPasswordText}>{showPassword ? 'Hide password' : 'Show password'}</Text>
+          </TouchableOpacity>
 
           {isLogin && (
             <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPassword}>
@@ -248,6 +260,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  showPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 4,
+    paddingVertical: 4,
+  },
+  showPasswordText: {
+    color: '#6B7280',
+    fontSize: 13,
+    fontWeight: '600',
   },
   forgotButton: {
     alignSelf: 'flex-end',

@@ -6,6 +6,7 @@ import { getGoalMatch, getPlanForCategory, CATEGORY_LABELS } from '../data/activ
 import { showAlert } from '../utils/crossAlert';
 import { useSubscription } from '../context/SubscriptionContext';
 import HeaderBack from '../components/HeaderBack';
+import ActivityPlanGuide from '../components/ActivityPlanGuide';
 
 export default function ActivityPlanScreen({ route, navigation }) {
   const { child, goal } = route.params;
@@ -16,6 +17,7 @@ export default function ActivityPlanScreen({ route, navigation }) {
   const needsPicker = match.confidence === 'none' && !pickedCategory;
   const searchTerm = (goal || '').replace(/^\s*(i want to be|to be|become|be)\s+(a|an|the)?\s*/i, '').trim() || goal;
   const [customPlan, setCustomPlan] = useState([]);
+  const [scheduledCount, setScheduledCount] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
@@ -51,6 +53,14 @@ export default function ActivityPlanScreen({ route, navigation }) {
 
     return unsubscribe;
   }, [child.id, goal]);
+
+  // How many sessions are already scheduled for this child (drives the guide card)
+  useEffect(() => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+    const q = query(collection(db, 'activities'), where('userId', '==', userId), where('childId', '==', child.id));
+    return onSnapshot(q, (snap) => setScheduledCount(snap.size), () => setScheduledCount(0));
+  }, [child.id]);
 
   // Best-effort log of goals we could not classify (and what the user chose),
   // so the matcher can be improved. Never blocks the UI.
@@ -233,6 +243,8 @@ export default function ActivityPlanScreen({ route, navigation }) {
       </View>
 
       <ScrollView style={styles.content}>
+        <ActivityPlanGuide planCount={customPlan.length} scheduledCount={scheduledCount} childName={child.name} />
+
         {/* Your Custom Plan Section */}
         {customPlan.length > 0 && (
           <View style={styles.section}>

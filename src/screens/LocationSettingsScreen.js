@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { geocodeSearch, reverseLookup, getDeviceCoords } from '../utils/geocode';
 import { showAlert } from '../utils/crossAlert';
 import HeaderBack from '../components/HeaderBack';
+import { saveLocation, getLocation, clearLocation } from '../utils/locationStore';
 
 export default function LocationSettingsScreen({ navigation }) {
   const [location, setLocation] = useState(null);
@@ -20,9 +21,8 @@ export default function LocationSettingsScreen({ navigation }) {
 
   const loadSavedLocation = async () => {
     try {
-      const saved = await AsyncStorage.getItem('userLocation');
-      if (saved) {
-        const locationData = JSON.parse(saved);
+      const locationData = await getLocation();
+      if (locationData) {
         setSavedLocation(locationData);
         setCustomLocation(locationData.address || '');
       }
@@ -100,7 +100,7 @@ export default function LocationSettingsScreen({ navigation }) {
         isCustom: true
       };
 
-      await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
+      await saveLocation(locationData);
       setLocation(locationData);
       setSavedLocation(locationData);
       
@@ -134,7 +134,7 @@ export default function LocationSettingsScreen({ navigation }) {
         timestamp: new Date().toISOString()
       };
 
-      await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
+      await saveLocation(locationData);
       setLocation(locationData);
       setSavedLocation(locationData);
       setCustomLocation(locationData.address);
@@ -190,7 +190,7 @@ export default function LocationSettingsScreen({ navigation }) {
           isCustom: true
         };
 
-        await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
+        await saveLocation(locationData);
         setLocation(locationData);
         setSavedLocation(locationData);
 
@@ -229,7 +229,7 @@ export default function LocationSettingsScreen({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem('userLocation');
+              await clearLocation();
               setLocation(null);
               setSavedLocation(null);
               setCustomLocation('');

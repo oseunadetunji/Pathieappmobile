@@ -9,6 +9,7 @@ import { useSubscription } from '../context/SubscriptionContext';
 // Google Places API Key
 import { GOOGLE_PLACES_API_KEY as LOCAL_KEY } from '../config.local';
 import HeaderBack from '../components/HeaderBack';
+import { getLocation } from '../utils/locationStore';
 const GOOGLE_PLACES_API_KEY = LOCAL_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
 export default function FindProvidersScreen({ route, navigation }) {
@@ -74,20 +75,19 @@ export default function FindProvidersScreen({ route, navigation }) {
     }
     
     try {
-      const savedLocation = await AsyncStorage.getItem('userLocation');
+      const locationData = await getLocation();
       
-      if (savedLocation) {
-        const locationData = JSON.parse(savedLocation);
+      if (locationData) {
         setUserLocation(locationData);
         await searchNearbyProviders(locationData);
       } else {
         setLoading(false);
         showAlert(
           'Location Not Set',
-          'Please set your location in Settings to find nearby activities.',
+          'Set your location once and Pathie can find activities near you. It takes a few seconds.',
           [
             { text: 'Cancel', style: 'cancel' },
-           { text: 'Go to Settings', onPress: () => navigation.navigate('Home', { screen: 'Settings' }) }
+           { text: 'Set my location', onPress: () => navigation.navigate('Home', { screen: 'Settings', params: { screen: 'LocationSettings' } }) }
           ]
         );
       }
@@ -98,8 +98,26 @@ export default function FindProvidersScreen({ route, navigation }) {
     }
   };
 
-  const searchNearbyProviders = async (location) => {
+  // Recent results are reused, so going back and forth between screens does not use up
+  // free searches. Only a fresh search is counted.
+  const CACHE_MINUTES = 30;
+  const cacheKey = (location) =>
+    `providerCache:${child?.id}|${goal}|${activity}|${Number(location.latitude).toFixed(2)},${Number(location.longitude).toFixed(2)}`;
+
+  const searchNearbyProviders = async (location, { force = false } = {}) => {
     setLoading(true);
+
+    if (!force) {
+      try {
+        const cached = JSON.parse((await AsyncStorage.getItem(cacheKey(location))) || 'null');
+        if (cached && Array.isArray(cached.providers) && cached.providers.length > 0
+            && Date.now() - cached.ts < CACHE_MINUTES * 60 * 1000) {
+          setProviders(cached.providers);
+          setLoading(false);
+          return;
+        }
+      } catch (e) { /* ignore cache problems and search normally */ }
+    }
 
     // Free plan: 5 searches a month (counted server-side)
     if (!(await checkAndRecordSearch(navigation))) {
@@ -200,7 +218,11 @@ export default function FindProvidersScreen({ route, navigation }) {
         const topicWords = topic ? topic.split(' ').filter((w) => w.length >= 4) : [];
         const score = (p) => topicWords.some((w) => p.name.toLowerCase().includes(w)) ? 0 : 1;
         relevant.sort((a, b) => score(a) - score(b) || a.distanceValue - b.distanceValue);
-        setProviders(relevant.slice(0, 15).map(({ _types, ...rest }) => rest));
+        const finalProviders = relevant.slice(0, 15).map(({ _types, ...rest }) => rest);
+        setProviders(finalProviders);
+        try {
+          await AsyncStorage.setItem(cacheKey(location), JSON.stringify({ ts: Date.now(), providers: finalProviders }));
+        } catch (e) { /* cache is optional */ }
       } else {
         setProviders([]);
         showAlert(
@@ -543,7 +565,7 @@ export default function FindProvidersScreen({ route, navigation }) {
 
   const retrySearch = () => {
     if (userLocation) {
-      searchNearbyProviders(userLocation);
+      searchNearbyProviders(userLocation, { force: true });
     } else {
       loadUserLocationAndSearch();
     }

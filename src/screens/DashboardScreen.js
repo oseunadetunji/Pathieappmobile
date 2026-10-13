@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { auth, db } from '../../firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import HeaderBack from '../components/HeaderBack';
+import GettingStarted from '../components/GettingStarted';
 
 export default function DashboardScreen({ navigation }) {
   const [children, setChildren] = useState([]);
@@ -65,6 +66,8 @@ export default function DashboardScreen({ navigation }) {
         <Text style={styles.greeting}>Welcome back! {"\uD83D\uDC4B"}</Text>
         <Text style={styles.subtitle}>Here's your family's progress</Text>
       </View>
+
+      <GettingStarted kids={children} activities={activities} navigation={navigation} />
 
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
